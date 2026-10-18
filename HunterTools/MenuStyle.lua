@@ -35,4 +35,47 @@ function F.FinishMenu(p,w,h)
         end
     end
     buttons(p)
+    if p.alertPositionKey and F.RestoreAlertPosition then F.RestoreAlertPosition(p,p.alertPositionKey) end
+end
+
+local function coordinate(v)
+    return (not issecretvalue or not issecretvalue(v)) and type(v)=='number' and v==v and math.abs(v)<100000
+end
+local function alertScale(p)
+    local own,root=p:GetEffectiveScale(),UIParent:GetEffectiveScale()
+    if coordinate(own) and coordinate(root) and own>0 and root>0 then return own/root end
+    return 1
+end
+function F.RestoreAlertPosition(p,key)
+    if InCombatLockdown() or p.alertDragging or not F.db then return end
+    local positions=F.db.alertPositions
+    local saved=type(positions)=='table' and positions[key]
+    if type(saved)~='table' or not coordinate(saved.x) or not coordinate(saved.y) then return end
+    local scale=alertScale(p)
+    p:ClearAllPoints();p:SetPoint('CENTER',UIParent,'CENTER',saved.x/scale,saved.y/scale)
+    return true
+end
+function F.MakeMovableAlert(p,key)
+    p.alertPositionKey=key
+    p:SetMovable(true);p:EnableMouse(true);p:RegisterForDrag('LeftButton')
+    local function finish()
+        if not p.alertDragging then return end
+        if InCombatLockdown() then p.alertStopPending=true;return end
+        p:StopMovingOrSizing();p.alertDragging=nil;p.alertStopPending=nil
+        local x,y=p:GetCenter();local px,py=UIParent:GetCenter()
+        if not F.db or not coordinate(x) or not coordinate(y) or not coordinate(px) or not coordinate(py) then return end
+        local scale=alertScale(p)
+        if type(F.db.alertPositions)~='table' then F.db.alertPositions={} end
+        F.db.alertPositions[key]={x=x*scale-px,y=y*scale-py}
+        F.RestoreAlertPosition(p,key)
+    end
+    p:SetScript('OnDragStart',function()
+        if InCombatLockdown() or not IsShiftKeyDown() then return end
+        p:StartMoving();p.alertDragging=true
+    end)
+    p:SetScript('OnDragStop',finish)
+    p:HookScript('OnHide',finish)
+    p:RegisterEvent('PLAYER_REGEN_ENABLED')
+    p:HookScript('OnEvent',function(_,event) if event=='PLAYER_REGEN_ENABLED' and p.alertStopPending then finish() end end)
+    F.RestoreAlertPosition(p,key)
 end

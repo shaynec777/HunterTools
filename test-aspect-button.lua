@@ -1,3 +1,5 @@
+local shift=true
+IsShiftKeyDown=function() return shift end
 local settings={button={enabled=true,locked=false,x=-80,y=-180}}
 local state={choices={{id=14318,name='Aspect of the Hawk'},{id=13163,name='Aspect of the Monkey'}}}
 local F={db={},AspectSettings=function() return settings end,AspectState=function() return state end}
@@ -7,7 +9,7 @@ C_Spell={GetSpellTexture=function(id) return id+10 end}
 local created=0
 local function widget()
     created=created+1
-    local w={scripts={},attributes={},refs={},shown=false}
+    local w={scripts={},attributes={},refs={},shown=false,moving=false}
     setmetatable(w,{__index=function(_,key)
         if key=='SetFrameRef' then return nil end -- Click template does not supply base-template methods.
         if key=='CreateTexture' or key=='CreateFontString' then return widget end
@@ -42,7 +44,8 @@ assert(p.buttons[1].shown and p.buttons[1].attributes.type=='spell' and p.button
 assert(p.buttons[2].attributes.spell==13163 and not p.buttons[3].shown)
 assert(p.buttons[1].aspectIcon.texture==14328 and p.buttons[1].text=='Aspect of the Hawk')
 assert(p.buttons[1].secureClose=='self:GetParent():Hide()')
-b.scripts.OnDragStart(b);assert(b.moving)
+shift=false;b.scripts.OnDragStart(b);assert(not b.moving,'plain drag must not move')
+shift=true;b.scripts.OnDragStart(b);assert(b.moving)
 b.scripts.OnDragStop(b);assert(not b.moving and settings.button.x==-100 and settings.button.y==-100)
 settings.button.locked=true;b.scripts.OnDragStart(b);assert(not b.moving)
 state.active=state.choices[1];F.UpdateAspectButton();assert(b.icon.texture==14328 and not b.empty.shown and b.aspectName=='Aspect of the Hawk')

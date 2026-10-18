@@ -16,7 +16,7 @@ local function panel(name,title,w,h)
     return p
 end
 function F.HideConfigPages()
-    for _,key in ipairs({'configPanel','foodPanel','ammoPanel','instanceSettingsPanel','rangeSettingsPanel','petStatusSettingsPanel','petListPanel','animalSettingsPanel','petAbilityBrowser','ammoUpgradePanel','protectionPanel','weaponSettingsPanel','beastJournalPanel','aspectSettingsPanel','aspectPrompt','aspectPicker','petAlertPanel'}) do
+    for _,key in ipairs({'configPanel','foodPanel','ammoPanel','instanceSettingsPanel','rangeSettingsPanel','petStatusSettingsPanel','petListPanel','animalSettingsPanel','petAbilityBrowser','ammoUpgradePanel','protectionPanel','weaponSettingsPanel','beastJournalPanel','aspectSettingsPanel','aspectPrompt','aspectPicker','petAlertPanel','trackingSettingsPanel','trackingPicker'}) do
         if F[key] then F[key]:Hide() end
     end
 end
@@ -85,6 +85,8 @@ function F.OpenConfig()
         end
         local aspect=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');aspect:SetSize(206,27);aspect:SetPoint('TOPLEFT',28,-531);aspect:SetText('Aspect reminders >')
         aspect:SetScript('OnClick',function() F.OpenAspectSettings() end);p.actions.aspects=aspect
+        local tracking=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');tracking:SetSize(206,27);tracking:SetPoint('TOPLEFT',277,-531);tracking:SetText('Tracking button >')
+        tracking:SetScript('OnClick',function() F.OpenTrackingSettings() end);p.actions.tracking=tracking
         local weapons=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');weapons:SetSize(206,27);weapons:SetPoint('TOPLEFT',526,-531);weapons:SetText('Weapon comparisons >')
         weapons:SetScript('OnClick',function() F.OpenWeaponComparisonSettings() end);p.actions.weapons=weapons
         F.FinishMenu(p,760,572)

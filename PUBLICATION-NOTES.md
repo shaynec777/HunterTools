@@ -71,3 +71,7 @@ Testing update, October 17, 2026: user confirmed that after the hunter learns a 
 Testing update, October 17, 2026: user confirmed the aspect button works and the pet healing-distance warning works with the larger text. This confirms the reported button behavior and warning presentation; combat aspect switching, intentional-cancellation handling and the instance Pack replacement chooser were not separately confirmed.
 
 Ongoing requirement, October 17, 2026: always show the current addon version in the main menu. The label now reads F.VERSION dynamically when the menu refreshes; maintain this in all future releases.
+
+## HunterTools 3.1.2 — October 18, 2026
+
+Published GitHub release https://github.com/shaynec777/HunterTools/releases/tag/v3.1.2 at commit 80632854f8db5b5b78f51c45fc37abd39b7c7d33. ZIP SHA256 db1975c7185212eb1332a2a65aa60050c8f993f55ec5c0e447a966ed5c542079 (271730 bytes), uploaded GitHub asset digest verified. CurseForge file 9239112 is Under Review with automatic publication enabled. Public project description saved successfully. Aspect controls, Mend Pet range warning, native restricted-health visual/death alerts and menu version included. Sound/chat restriction explicitly documented; weapon comparisons/scopes remain Experimental with formula retained. All release regressions, Lua 5.1 syntax/TOC and addon-only ZIP root checks passed. Installed both addon folders with backup and complete source hash verification.

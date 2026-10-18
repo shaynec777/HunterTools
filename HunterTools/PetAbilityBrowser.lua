@@ -211,7 +211,7 @@ function F.OpenPetAbilityBrowser()
         if type(width)=='number' and type(height)=='number' then p:SetScale(math.min(1,width/970,height/640)) end
         p:SetBackdrop({bgFile='Interface\\DialogFrame\\UI-DialogBox-Background',edgeFile='Interface\\DialogFrame\\UI-DialogBox-Border',edgeSize=24})
         p:SetMovable(true);p:EnableMouse(true);p:RegisterForDrag('LeftButton')
-        p:SetScript('OnDragStart',function() if not InCombatLockdown() then p:StartMoving() end end)
+        p:SetScript('OnDragStart',function() if IsShiftKeyDown() and not InCombatLockdown() then p:StartMoving() end end)
         p:SetScript('OnDragStop',function() p:StopMovingOrSizing() end)
         local close=CreateFrame('Button',nil,p,'UIPanelCloseButton');close:SetPoint('TOPRIGHT',-4,-4)
         table.insert(UISpecialFrames,'HunterToolsPetAbilityBrowser')

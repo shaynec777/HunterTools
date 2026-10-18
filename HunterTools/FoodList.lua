@@ -57,7 +57,7 @@ function F.OpenFoodList()
     F.foodPanel=p
     p:SetSize(680,590); p:SetPoint('CENTER'); p:SetFrameStrata('DIALOG')
     p:SetMovable(true); p:EnableMouse(true); p:RegisterForDrag('LeftButton')
-    p:SetScript('OnDragStart',p.StartMoving); p:SetScript('OnDragStop',p.StopMovingOrSizing)
+    p:SetScript('OnDragStart',function(self) if IsShiftKeyDown() and not InCombatLockdown() then self:StartMoving() end end); p:SetScript('OnDragStop',p.StopMovingOrSizing)
     p:SetBackdrop({bgFile='Interface\\DialogFrame\\UI-DialogBox-Background',edgeFile='Interface\\DialogFrame\\UI-DialogBox-Border',edgeSize=24})
     local title=p:CreateFontString(nil,'OVERLAY','GameFontNormalLarge')
     title:SetPoint('TOP',0,-18); title:SetText('HunterTools food list')

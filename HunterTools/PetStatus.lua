@@ -156,7 +156,7 @@ function F.UpdatePetStatusWindow()
         end
         p.health=bar({0.2,0.75,0.25});p.focus=bar({0.9,0.5,0.15})
         p.details=p:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');p.details:SetWidth(286);p.details:SetJustifyH('LEFT');p.details:SetSpacing(4)
-        p:SetScript('OnDragStart',function() if not InCombatLockdown() and not F.PetStatusSettings().locked then p:StartMoving() end end)
+        p:SetScript('OnDragStart',function() if IsShiftKeyDown() and not InCombatLockdown() and not F.PetStatusSettings().locked then p:StartMoving() end end)
         p:SetScript('OnDragStop',function()
             p:StopMovingOrSizing();if InCombatLockdown() then return end
             local x,y=p:GetCenter();local px,py=UIParent:GetCenter();local settings=F.PetStatusSettings();settings.x=x-px;settings.y=y-py

@@ -69,6 +69,7 @@ function F.BuildInstancePrompt()
         if InCombatLockdown() then return end
         F.instanceCheckPending=false; p:Hide()
     end)
+    if F.MakeMovableAlert then F.MakeMovableAlert(p,'instance') end
     p:Hide()
 end
 

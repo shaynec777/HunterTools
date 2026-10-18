@@ -8,30 +8,30 @@ HunterTools brings pet feeding, ammunition reminders and upgrades, dungeon check
 
 ## New in this update
 
-- Optional aspect chooser when no aspect is active, with learned-aspect icons and an intentional no-aspect choice. A movable, lockable aspect button opens a learned-aspect picker on right-click (`/ht aspects`).
-- Instance-entry Pack reminders now offer another learned aspect or an explicit Keep Pack choice. Growl autocast remains a separate click action.
-- Optional large Mend Pet out-of-range warning in the range window, including when no target is selected.
-- Pet low-health and pet-dead warnings (`/ht petalerts`) with independent enable, banner, chat and sound options, a configurable health threshold, and repeat intervals. When Forever restricts health, a native visual banner still warns below the threshold and says OUT OF RANGE TO MEND PET when confirmed too far away. **Restricted-health low warnings cannot trigger sound/chat or timed repeats; death alerts work separately.**
-- The main menu displays the installed addon version.
+- Movable Tracking button with a right-click picker for learned hunter and profession tracking, including Find Herbs and Find Minerals when known. Active choices have an icon and green marker. Open `/ht tracking` for enable, lock and reset controls.
+- Optional no-tracking reminder offers learned tracking choices, Stay without tracking, and Later (five minutes). Button and reminder can be enabled independently.
+- Tracking and aspect choosers now open at matching positions beside their respective buttons until moved.
+- Tracking, aspect and dungeon alert dialogs can be repositioned and remember their own positions.
 
-## Bug fixes
+## Bug fixes and refinements
 
-- Fixed aspect picker initialization on Forever, including secure handler bodies and frame-reference setup.
-- Finish and save aspect-button dragging safely after combat interrupts a drag.
-- Keep aspect reminders from overlapping the settings pages.
-- Use font-compatible punctuation in the low-health warning and keep its Mend Pet advice range-aware.
+- Standardize all movable HunterTools buttons, windows and dialogs on **Shift + left-drag outside combat**. Locks remain respected; help text matches the controls.
+- Reduce tracking/aspect chooser width and spacing, and fit the aspect alert height to its available choices.
+- Preserve moved dialog positions across reopening and UI scaling, and safely finish interrupted dialog dragging after combat.
+- Suppress no-tracking reminders during combat, travel, other settings and uncertain tracking state. Remember an intentional no-tracking choice until tracking is activated again.
 
 ## Tools and controls
 
 - **Food:** one-click feeding or your Feed Pet keybinding, per-pet allowed/blocked lists, food protection, hunger sounds/text reminders and supply warnings. Food catalog and Feeding & alerts have separate tabs.
 - **Ammunition:** track selected ammo types with individual minimums. Configure stock alerts separately from upgrade advice and its notification interval/channel. Engineered ammo is optional. Counts exclude banks and wait through inventory loading.
 - **Range and animals:** movable target window with distance estimates, plus independent mouseover and range-target animal fields. Show roles, abilities/learned ranks, diet and matching bag-food quantities. A family does not guarantee tameability.
-- **Pet status:** movable own-pet window and own-pet mouseover tips, independently selected details, position locking and reset. Independent low-health and death warnings include the native visual fallback described above.
+- **Pet status:** movable own-pet window and own-pet mouseover tips, independently selected details, position locking and reset. Independent low-health and death warnings include a persistent native visual when health is restricted. Restricted-health low warnings cannot trigger sound/chat or timed repeats; death alerts work separately.
 - **Pet abilities:** `/ht abilities` shows learned/next ranks and teaching animals with levels/zones. Wowhead opens a selected URL: press Ctrl+C, then paste it into a browser. Show pet pictures can be turned off; first-time creature models can load slowly.
+- **Aspects and tracking:** `/ht aspects` and `/ht tracking` configure separate movable buttons and optional missing-aspect/tracking dialogs. Tracking includes learned profession abilities.
 - **Dungeon checks:** offer to disable Growl autocast and replace your own Aspect of the Pack with another learned aspect on entry. Changes require your click and wait until combat ends.
 - **Experimental weapon comparisons and scope previews:** `/ht weapons` enables/disables tooltip estimates and selects the candidate scope preview. Settings are saved per character.
 
-Use `/ht` or `/huntertools` for the tool menu; `/ht aspects` (aspect chooser/button), `/ht petalerts` (health/death warnings), `/ht petalertdebug` (health diagnostics), `/ht beasts` (collection journal), `/ht hungerdebug` (alert diagnostics), `/ht foods`, `/ht ammo`, `/ht abilities`, `/ht weapons`, and `/ht petsettings` open their respective controls. `/fom` and `/feedomatictoo` remain aliases. Right-click the feeder or pet-status window for the tool menu. Feeding always requires a click or keypress.
+Use `/ht` or `/huntertools` for the tool menu; `/ht tracking` (tracking chooser/button), `/ht aspects` (aspect chooser/button), `/ht petalerts` (health/death warnings), `/ht petalertdebug` (health diagnostics), `/ht beasts` (collection journal), `/ht hungerdebug` (alert diagnostics), `/ht foods`, `/ht ammo`, `/ht abilities`, `/ht weapons`, and `/ht petsettings` open their respective controls. `/fom` and `/feedomatictoo` remain aliases. Right-click the feeder or pet-status window for the tool menu. Feeding always requires a click or keypress. Move unlocked windows and buttons with Shift + left-drag outside combat.
 
 ## Experimental ranged comparison formula
 
@@ -53,7 +53,7 @@ Open Beast Training to seed or refresh learned ranks. Learned and missing labels
 
 Pet roles, diets and teaching sources combine Petopia Forever, labeled community reports, local observations, Wowhead Forever and a Classic fallback. Live Beast Lore takes priority. The new collection journal still needs broader in-game testing. Unknown details remain unknown; we plan to verify and refine the database after Forever leaves beta.
 
-The menus, animal tooltip changes, ability browser/copy links, ammo recommendations/notifications and depleted-stock behavior have in-game feedback plus automated regression coverage. One equipped-weapon estimate matched the character sheet; candidate weapon and scope effects still need broader testing and remain Experimental. The aspect button, enlarged pet-healing range warning, native low-health banner and its out-of-range wording were confirmed in-game. Learned-rank mouseover updates after a new tame were also confirmed. Combat aspect switching, intentional-cancellation handling, the instance Pack replacement chooser and some Beast Lore paths still need broader checks.
+The menus, animal tooltip changes, ability browser/copy links, ammo recommendations/notifications and depleted-stock behavior have in-game feedback plus automated regression coverage. One equipped-weapon estimate matched the character sheet; candidate weapon and scope effects still need broader testing and remain Experimental. The aspect button, enlarged pet-healing range warning, native low-health banner and its out-of-range wording were confirmed in-game. Learned-rank mouseover updates after a new tame were also confirmed. Tracking button/no-tracking dialog behavior and logout/login without errors were confirmed; the latest compact/movable dialog layout and Shift-drag refinements have automated regression coverage and still need broader in-game feedback. Combat aspect switching, intentional-cancellation handling, the instance Pack replacement chooser and some Beast Lore paths still need broader checks.
 
 If a feature doesn't work, please leave a comment describing what happened, which feature you were using, and any error message so we can investigate.
 

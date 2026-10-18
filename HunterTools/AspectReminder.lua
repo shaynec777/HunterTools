@@ -87,18 +87,18 @@ end
 function F.BuildAspectPrompt()
     if F.aspectPrompt or query(InCombatLockdown) then return end
     local p=CreateFrame('Frame','HunterToolsAspectPrompt',UIParent,'SecureHandlerStateTemplate,BackdropTemplate');F.aspectPrompt=p
-    p:SetSize(620,390);p:SetPoint('CENTER',0,90);p:SetFrameStrata('DIALOG');p:SetClampedToScreen(true)
+    p:SetSize(500,300);p:SetPoint('CENTER',0,90);p:SetFrameStrata('DIALOG');p:SetClampedToScreen(true)
     p:SetBackdrop({bgFile='Interface\\DialogFrame\\UI-DialogBox-Background',edgeFile='Interface\\DialogFrame\\UI-DialogBox-Border',edgeSize=24})
     p:SetAttribute('_onstate-combat',[[if newstate == 'combat' then self:Hide() end]])
     RegisterStateDriver(p,'combat','[combat] combat; peace')
     local function label(y,font)
-        local t=p:CreateFontString(nil,'OVERLAY',font or 'GameFontHighlightSmall');t:SetPoint('TOPLEFT',26,y);t:SetWidth(568);t:SetJustifyH('LEFT');return t
+        local t=p:CreateFontString(nil,'OVERLAY',font or 'GameFontHighlightSmall');t:SetPoint('TOPLEFT',20,y);t:SetWidth(460);t:SetJustifyH('LEFT');return t
     end
-    p.title=label(-25,'GameFontNormalLarge');p.message=label(-65);p.message:SetHeight(48)
+    p.title=label(-20,'GameFontNormalLarge');p.message=label(-54);p.message:SetHeight(36)
     p.buttons={}
     for i=1,8 do
         local b=CreateFrame('Button',nil,p,'SecureActionButtonTemplate,UIPanelButtonTemplate')
-        b:SetSize(275,28);b:SetPoint('TOPLEFT',26+((i-1)%2)*292,-121-math.floor((i-1)/2)*36)
+        b:SetSize(222,26);b:SetPoint('TOPLEFT',20+((i-1)%2)*238,-100-math.floor((i-1)/2)*30)
         b.aspectIcon=b:CreateTexture(nil,'OVERLAY');b.aspectIcon:SetSize(20,20);b.aspectIcon:SetPoint('LEFT',8,0)
         local caption=b:GetFontString()
         if caption then caption:ClearAllPoints();caption:SetPoint('LEFT',36,0);caption:SetPoint('RIGHT',-8,0);caption:SetJustifyH('LEFT') end
@@ -123,6 +123,7 @@ function F.BuildAspectPrompt()
         else F.AspectSettings().enabled=false;hide() end
     end)
     p.help=label(-354);p.help:SetText('Buttons cast only when you click. Combat pauses the chooser. No aspect is selected automatically.')
+    if F.MakeMovableAlert then F.MakeMovableAlert(p,'aspectReminder') end
     p:Hide()
 end
 function F.ShowAspectChooser(reason,e,state)
@@ -131,10 +132,19 @@ function F.ShowAspectChooser(reason,e,state)
     if F.AspectMenuOpen() then hide();return end
     if GetTime()<(F.aspectSnoozeUntil or 0) or GetTime()<(F.aspectCheckAt or 0) then return end
     state=state or F.AspectState();if not state then return end
+    if F.BuildAspectButton then F.BuildAspectButton() end
     F.BuildAspectPrompt();local p=F.aspectPrompt;p.reason=reason
-    p.title:SetText(reason=='pack' and 'Choose another aspect for this instance' or 'Choose an aspect')
-    p.message:SetText(reason=='pack' and 'Your Aspect of the Pack is active. Choose another learned aspect for this dungeon or raid, or explicitly keep Pack.'
-        or 'You have no active aspect. Choose one below, or select Stay without an aspect if this is intentional. That choice lasts until you activate an aspect again.')
+    if p.alertDragging==true then return end
+    p:ClearAllPoints()
+    if F.aspectButton then p:SetPoint('TOPLEFT',F.aspectButton,'TOPRIGHT',6,0)
+    else
+        local position=F.AspectSettings().button
+        p:SetPoint('TOPLEFT',UIParent,'CENTER',position.x+28,position.y+22)
+    end
+    if F.RestoreAlertPosition then F.RestoreAlertPosition(p,'aspectReminder') end
+    p.title:SetText(reason=='pack' and 'Pack is on - choose another aspect' or 'Choose an aspect')
+    p.message:SetText(reason=='pack' and 'Choose another aspect for this instance, or keep Pack.'
+        or 'No aspect is active. Choose one, or stay without an aspect until you activate one again.')
     local index=0
     local inside,kind=query(IsInInstance)
     local avoidPack=reason=='pack' or (inside and (kind=='party' or kind=='raid'))
@@ -152,12 +162,20 @@ function F.ShowAspectChooser(reason,e,state)
     local growl=e and e.growlOn and e.growl
     p.growl:SetAttribute('macrotext',growl and ('/petautocastoff '..growl) or '')
     p.growl:SetShown(growl~=nil and growl~=false)
-    if F.FinishMenu then F.FinishMenu(p,620,390) end
+    local row=104+math.max(1,math.ceil(index/2))*30
+    p.growl:ClearAllPoints();p.growl:SetPoint('TOPLEFT',20,-row);p.growl:SetSize(222,26)
+    p.keep:ClearAllPoints();p.keep:SetPoint('TOPLEFT',growl and 258 or 20,-row);p.keep:SetSize(growl and 222 or 460,26)
+    p.later:ClearAllPoints();p.later:SetPoint('TOPLEFT',20,-row-32);p.later:SetSize(222,26)
+    p.disable:ClearAllPoints();p.disable:SetPoint('TOPLEFT',258,-row-32);p.disable:SetSize(222,26)
+    p.help:ClearAllPoints();p.help:SetPoint('TOPLEFT',20,-row-68);p.help:SetWidth(460)
+    p.help:SetText('Click to cast. Shift-drag to move outside combat.')
+    local height=row+100;p:SetSize(500,height)
+    if F.FinishMenu then F.FinishMenu(p,500,height) end
     p:Show()
 end
-function F.AspectMenuOpen()
-    for _,key in ipairs({'configPanel','aspectSettingsPanel','instanceSettingsPanel','foodPanel','ammoPanel','rangeSettingsPanel','petStatusSettingsPanel','petAbilityBrowser','beastJournalPanel','aspectPicker','petAlertPanel','petListPanel','animalSettingsPanel','ammoUpgradePanel','protectionPanel','weaponSettingsPanel'}) do
-        local p=F[key];if p and p:IsShown() then return true end
+function F.AspectMenuOpen(exclude)
+    for _,key in ipairs({'configPanel','aspectSettingsPanel','instanceSettingsPanel','foodPanel','ammoPanel','rangeSettingsPanel','petStatusSettingsPanel','petAbilityBrowser','beastJournalPanel','aspectPicker','petAlertPanel','trackingSettingsPanel','trackingPicker','petListPanel','animalSettingsPanel','ammoUpgradePanel','protectionPanel','weaponSettingsPanel'}) do
+        local p=F[key];if key~=exclude and p and p:IsShown() then return true end
     end
     return false
 end

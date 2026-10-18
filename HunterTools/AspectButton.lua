@@ -17,7 +17,7 @@ function F.BuildAspectButton()
     b.empty=b:CreateFontString(nil,'OVERLAY','GameFontNormalLarge');b.empty:SetPoint('CENTER');b.empty:SetText('?')
     b:RegisterForDrag('LeftButton');b:RegisterForClicks('RightButtonUp')
     b:SetScript('OnDragStart',function(self)
-        if not InCombatLockdown() and not F.AspectSettings().button.locked then self:StartMoving();F.aspectButtonDragging=true end
+        if IsShiftKeyDown() and not InCombatLockdown() and not F.AspectSettings().button.locked then self:StartMoving();F.aspectButtonDragging=true end
     end)
     b:SetScript('OnDragStop',function()
         if not F.aspectButtonDragging then return end
@@ -29,7 +29,7 @@ function F.BuildAspectButton()
         GameTooltip:SetOwner(self,'ANCHOR_RIGHT');GameTooltip:AddLine('HunterTools aspects',1,0.82,0)
         GameTooltip:AddLine(self.aspectName or 'No active aspect confirmed',1,1,1)
         GameTooltip:AddLine('Right-click: choose a learned aspect.',0.8,0.9,0.8,true)
-        GameTooltip:AddLine(F.AspectSettings().button.locked and 'Position locked. /ht aspects opens settings.' or 'Left-drag to move. /ht aspects opens settings.',0.8,0.8,0.8,true)
+        GameTooltip:AddLine(F.AspectSettings().button.locked and 'Position locked. /ht aspects opens settings.' or 'Shift + left-drag to move. /ht aspects opens settings.',0.8,0.8,0.8,true)
         GameTooltip:Show()
     end)
     b:SetScript('OnLeave',function() if GameTooltip then GameTooltip:Hide() end end)
@@ -37,7 +37,7 @@ function F.BuildAspectButton()
     p:SetSize(300,170);p:SetPoint('TOPLEFT',b,'TOPRIGHT',6,0);p:SetFrameStrata('DIALOG');p:SetClampedToScreen(true)
     p:SetBackdrop({bgFile='Interface\\Buttons\\WHITE8X8',edgeFile='Interface\\DialogFrame\\UI-DialogBox-Border',edgeSize=18});p:SetBackdropColor(0.035,0.047,0.044,1)
     p.title=p:CreateFontString(nil,'OVERLAY','GameFontNormal');p.title:SetPoint('TOPLEFT',20,-20);p.title:SetText('Choose a learned aspect')
-    p.help=p:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');p.help:SetPoint('BOTTOM',0,12);p.help:SetText('Right-click the aspect button to close.')
+    p.help=p:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');p.help:SetPoint('BOTTOM',0,12);p.help:SetText('Right-click button to close. Shift-drag to move.')
     p.buttons={}
     for i=1,8 do
         local choice=CreateFrame('Button',nil,p,'SecureActionButtonTemplate,UIPanelButtonTemplate');p.buttons[i]=choice
@@ -58,6 +58,7 @@ function F.BuildAspectButton()
             if picker:IsShown() then picker:Hide() else picker:Show() end
         end
     ]])
+    if F.MakeMovableAlert then F.MakeMovableAlert(p,'aspectPicker') end
     p:Hide();b:Hide()
 end
 function F.FinishAspectButtonDrag()

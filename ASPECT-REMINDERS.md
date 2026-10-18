@@ -1,6 +1,6 @@
 # Aspect chooser — 3.1.2
 
-- Optional movable aspect button; enabled by default. Left-drag to move it, right-click for a secure learned-aspect picker. Position saves per character; enable, lock and reset controls are in aspect settings. The current aspect icon updates outside combat, with a question mark when none is confirmed. Prepared picker buttons can be used in combat; learned choices refresh after combat.
+- Optional movable aspect button; enabled by default. Shift + left-drag to move it, right-click for a secure learned-aspect picker. Position saves per character; enable, lock and reset controls are in aspect settings. The current aspect icon updates outside combat, with a question mark when none is confirmed. Prepared picker buttons can be used in combat; learned choices refresh after combat.
 - Optional no-aspect pop-up; enabled by default. Configure with `/ht aspects` or the Aspect reminders button in the main menu.
 - Shows only learned aspects, using the highest known rank in each spell family. Aspect names come from the client. No aspect is cast automatically; each action uses a secure click button.
 - Stay without an aspect saves intentional absence per character until you next activate an aspect. An identifiable direct cancellation through C_UnitAuras.CancelAuraByInstanceID is also remembered, using the cached public identity of your own aspect. Other cancellation paths may require the explicit Stay without choice; aura loss alone is never assumed intentional.

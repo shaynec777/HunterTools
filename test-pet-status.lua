@@ -1,3 +1,5 @@
+local shift=true
+IsShiftKeyDown=function() return shift end
 local F={db={},FEED_EFFECT=1539}
 local frames={}
 local function widget()
@@ -61,7 +63,8 @@ hooks.OnTooltipCleared(tip);tip.GetUnit=function() return 'Other','target' end;a
 s.enabled=true;F.UpdatePetStatusWindow();local p=F.petStatusWindow;assert(p.shown and p.name.text=='Strider' and p.health.shown and p.focus.shown)
 F.OpenConfig=function() F.menuOpened=true end;p.scripts.OnMouseUp(nil,'RightButton');assert(F.menuOpened)
 s.windowFields.health=false;F.UpdatePetStatusWindow();assert(not p.health.shown and p.focus.shown)
-p.scripts.OnDragStart();assert(p.moving);p.scripts.OnDragStop();assert(not p.moving and s.x==300 and s.y==200)
+shift=false;p.scripts.OnDragStart();assert(p.moving~=true,'plain drag must not move')
+shift=true;p.scripts.OnDragStart();assert(p.moving);p.scripts.OnDragStop();assert(not p.moving and s.x==300 and s.y==200)
 s.locked=true;p.scripts.OnDragStart();assert(not p.moving)
 F.ResetPetStatusPosition();assert(s.x==270 and s.y==-160)
 InCombatLockdown=function() return true end

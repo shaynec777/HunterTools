@@ -8,7 +8,7 @@ function F.OpenAmmoSettings()
     F.ammoPanel=p; p.page=1
     p:SetSize(660,590); p:SetPoint('CENTER'); p:SetFrameStrata('DIALOG')
     p:SetMovable(true); p:EnableMouse(true); p:RegisterForDrag('LeftButton')
-    p:SetScript('OnDragStart',p.StartMoving); p:SetScript('OnDragStop',p.StopMovingOrSizing)
+    p:SetScript('OnDragStart',function(self) if IsShiftKeyDown() and not InCombatLockdown() then self:StartMoving() end end); p:SetScript('OnDragStop',p.StopMovingOrSizing)
     p:SetBackdrop({bgFile='Interface\\DialogFrame\\UI-DialogBox-Background',edgeFile='Interface\\DialogFrame\\UI-DialogBox-Border',edgeSize=24})
     local close=CreateFrame('Button',nil,p,'UIPanelCloseButton'); close:SetPoint('TOPRIGHT',-4,-4)
     p.stockPage=CreateFrame('Frame',nil,p);p.stockPage:SetSize(660,590);p.stockPage:SetPoint('TOPLEFT',0,100)

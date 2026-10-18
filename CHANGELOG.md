@@ -1,3 +1,35 @@
+# HunterTools 3.1.3
+
+## New in this update
+
+- Movable Tracking button with a right-click picker for learned hunter and profession tracking, including Find Herbs and Find Minerals when known. Active choices have an icon and green marker. Open `/ht tracking` for enable, lock and reset controls.
+- Optional no-tracking reminder offers learned tracking choices, Stay without tracking, and Later (five minutes). Button and reminder can be enabled independently.
+- Tracking and aspect choosers now open at matching positions beside their respective buttons until moved.
+- Tracking, aspect and dungeon alert dialogs can be repositioned and remember their own positions.
+
+## Bug fixes and refinements
+
+- Standardize all movable HunterTools buttons, windows and dialogs on **Shift + left-drag outside combat**. Locks remain respected; help text matches the controls.
+- Reduce tracking/aspect chooser width and spacing, and fit the aspect alert height to its available choices.
+- Preserve moved dialog positions across reopening and UI scaling, and safely finish interrupted dialog dragging after combat.
+- Suppress no-tracking reminders during combat, travel, other settings and uncertain tracking state. Remember an intentional no-tracking choice until tracking is activated again.
+
+## Existing features and limits
+
+The aspect button, pet healing-range warning and native low-health/death alerts from 3.1.2 remain included. When Forever restricts pet health, the native low-health visual still works, but low-health sound/chat and timed repeats are unavailable. Death alerts work separately.
+
+Ranged weapon comparisons and scope previews remain **Experimental**.
+
+Character Auto Shot DPS = ((estimated minimum shot damage + estimated maximum shot damage) / 2) / effective shot interval in seconds.
+
+The estimate includes character ranged AP, ammo, scope and retained live damage/attack-speed bonuses. It excludes armor, misses, crit, rotations, pet damage, procs and unsupported stat/talent effects. Pet data retains labeled community/Classic fallbacks and local observations; unknown facts remain unknown.
+
+## Updating and validation
+
+Install both addon folders from the ZIP and fully restart WoW to load TrackingButton.lua. Existing settings are retained. `/ht tracking` opens tracking controls; `/ht aspects` opens aspect controls.
+
+The tracking button and no-tracking dialog were confirmed in-game, including logout/login without errors. Automated checks cover hunter/profession discovery, secure picker setup, reminder/toggle/snooze behavior, saved movement and scale conversion, interrupted drags, and rejection of dragging without Shift. Compact dialog layout and the latest movement refinements still need broader in-game feedback. Existing Pack/combat aspect behavior and beast collection retain their previously documented testing limits.
+
 # HunterTools 3.1.2
 
 ## New in this update
