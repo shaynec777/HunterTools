@@ -5,10 +5,40 @@ function F.RangeSettings()
     local s=F.db.range
     if type(s.enabled)~='boolean' then s.enabled=true end
     for _,key in ipairs({'showPetAbilities','showPetDiet'}) do if type(s[key])~='boolean' then s[key]=true end end
+    if type(s.showPetHealRange)~='boolean' then s.showPetHealRange=true end
     for key,default in pairs({x=0,y=-230}) do
         if type(s[key])~='number' or s[key]~=s[key] or math.abs(s[key])>10000 then s[key]=default end
     end
     return s
+end
+local function query(fn,...)
+    if type(fn)~='function' then return end
+    local ok,value=pcall(fn,...)
+    if ok and safe(value) then return value end
+end
+-- Actual Forever hunter Mend Pet ranks; native range checks include applicable modifiers.
+local mendRanks={136,3111,3661,3662,13542,13543,13544}
+function F.PetHealRangeWarning(ignoreDisplaySetting)
+    if not ignoreDisplaySetting and not F.RangeSettings().showPetHealRange then return end
+    if query(UnitExists,'pet')~=true then return end
+    local dead=query(UnitIsDeadOrGhost,'pet')
+    if dead~=false then return end
+    if not InCombatLockdown() then
+        F.mendPetRangeSpell=nil
+        for _,id in ipairs(mendRanks) do
+            if query(C_SpellBook and C_SpellBook.IsSpellKnown,id)==true then F.mendPetRangeSpell=id end
+        end
+    end
+    local id=F.mendPetRangeSpell
+    if not id then return end
+    local inRange
+    if C_Spell and C_Spell.IsSpellInRange then inRange=query(C_Spell.IsSpellInRange,id,'pet')
+    elseif IsSpellInRange then
+        local name=query(C_Spell and C_Spell.GetSpellName,id)
+        if type(name)=='string' then inRange=query(IsSpellInRange,name,'pet') end
+    end
+    if inRange==false or inRange==0 then return 'Pet too far to heal (Mend Pet)' end
+    -- Missing/secret range results do not establish that the pet is too far away.
 end
 function F.TargetRangeStatus()
     F.rangeNonEnemy=false
@@ -104,6 +134,7 @@ function F.UpdateRangeWindow()
         p.targetName:SetJustifyH('LEFT'); p.targetName:SetWordWrap(false)
         p.text=p:CreateFontString(nil,'OVERLAY','GameFontNormalLarge'); p.text:SetPoint('TOPLEFT',60,-37)
         p.distance=p:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall'); p.distance:SetPoint('TOP',0,-69)
+        p.petHeal=p:CreateFontString(nil,'OVERLAY','GameFontNormalLarge');p.petHeal:SetPoint('TOPLEFT',12,-91);p.petHeal:SetWidth(221);p.petHeal:SetJustifyH('LEFT');p.petHeal:SetTextColor(1,0.2,0.15)
         p.petDetails=p:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall'); p.petDetails:SetPoint('TOPLEFT',12,-96); p.petDetails:SetWidth(221); p.petDetails:SetJustifyH('LEFT')
         p:SetScript('OnDragStart',function() if not InCombatLockdown() then p:StartMoving() end end)
         p:SetScript('OnDragStop',function()
@@ -117,7 +148,8 @@ function F.UpdateRangeWindow()
         p:SetScript('OnEnter',function()
             GameTooltip:SetOwner(p,'ANCHOR_RIGHT'); GameTooltip:SetText('Hunter range')
             GameTooltip:AddLine('Right-click: settings. Drag to move outside combat. /ht range toggles this window.',1,1,1,true)
-            GameTooltip:AddLine('Checks Auto Shot range; does not check line of sight, ammunition, or cooldowns.',0.7,0.7,0.7,true); GameTooltip:Show()
+            GameTooltip:AddLine('Checks Auto Shot range; does not check line of sight, ammunition, or cooldowns.',0.7,0.7,0.7,true)
+            GameTooltip:AddLine('Pet warning uses Mend Pet range. Line of sight and healing resources are not checked.',0.7,0.7,0.7,true);GameTooltip:Show()
         end)
         p:SetScript('OnLeave',function() GameTooltip:Hide() end)
     end
@@ -130,11 +162,15 @@ function F.UpdateRangeWindow()
         F.rangeWindow.portrait:Show()
     else F.rangeWindow.portrait:Hide() end
     local details=F.TargetPetDetails and F.TargetPetDetails()
+    local heal=F.PetHealRangeWarning()
+    F.rangeWindow.petHeal:SetText(heal or '');F.rangeWindow.petHeal:SetShown(heal~=nil)
+    local healSpace=heal and (F.rangeWindow.petHeal:GetStringHeight()+8) or 0
+    F.rangeWindow.petDetails:ClearAllPoints();F.rangeWindow.petDetails:SetPoint('TOPLEFT',12,-96-healSpace)
     F.rangeWindow.petDetails:SetText(details or '')
     F.rangeWindow.petDetails:SetShown(details~=nil)
-    F.rangeWindow:SetHeight(details and (110+F.rangeWindow.petDetails:GetStringHeight()) or 94)
+    F.rangeWindow:SetHeight((details and (110+F.rangeWindow.petDetails:GetStringHeight()) or 94)+healSpace)
     local text,r,g,b=F.TargetRangeStatus()
     F.rangeWindow.portrait:SetDesaturated(F.rangeNonEnemy and true or false)
     F.rangeWindow.targetName:SetTextColor(F.rangeNonEnemy and 0.7 or 1,F.rangeNonEnemy and 0.7 or 0.82,F.rangeNonEnemy and 0.7 or 0)
-    F.rangeWindow:SetAlpha(F.rangeNonEnemy and 0.65 or 1); F.rangeWindow.distance:SetTextColor(F.rangeNonEnemy and 0.65 or 1,F.rangeNonEnemy and 0.65 or 1,F.rangeNonEnemy and 0.65 or 1); F.rangeWindow.distance:SetText(F.TargetDistanceEstimate(text)); F.rangeWindow.text:SetText(text); F.rangeWindow.text:SetTextColor(F.rangeNonEnemy and 0.7 or r,F.rangeNonEnemy and 0.7 or g,F.rangeNonEnemy and 0.7 or b); F.rangeWindow:Show()
+    F.rangeWindow:SetAlpha((F.rangeNonEnemy and not heal) and 0.65 or 1); F.rangeWindow.distance:SetTextColor(F.rangeNonEnemy and 0.65 or 1,F.rangeNonEnemy and 0.65 or 1,F.rangeNonEnemy and 0.65 or 1); F.rangeWindow.distance:SetText(F.TargetDistanceEstimate(text)); F.rangeWindow.text:SetText(text); F.rangeWindow.text:SetTextColor(F.rangeNonEnemy and 0.7 or r,F.rangeNonEnemy and 0.7 or g,F.rangeNonEnemy and 0.7 or b); F.rangeWindow:Show()
 end

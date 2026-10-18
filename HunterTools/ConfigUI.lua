@@ -16,7 +16,7 @@ local function panel(name,title,w,h)
     return p
 end
 function F.HideConfigPages()
-    for _,key in ipairs({'configPanel','foodPanel','ammoPanel','instanceSettingsPanel','rangeSettingsPanel','petStatusSettingsPanel','petListPanel','animalSettingsPanel','petAbilityBrowser','ammoUpgradePanel','protectionPanel','weaponSettingsPanel','beastJournalPanel'}) do
+    for _,key in ipairs({'configPanel','foodPanel','ammoPanel','instanceSettingsPanel','rangeSettingsPanel','petStatusSettingsPanel','petListPanel','animalSettingsPanel','petAbilityBrowser','ammoUpgradePanel','protectionPanel','weaponSettingsPanel','beastJournalPanel','aspectSettingsPanel','aspectPrompt','aspectPicker','petAlertPanel'}) do
         if F[key] then F[key]:Hide() end
     end
 end
@@ -41,6 +41,7 @@ function F.SetToolEnabled(key,value)
 end
 function F.RefreshToolMenu()
     if not F.configPanel then return end
+    if F.configPanel.versionLabel then F.configPanel.versionLabel:SetText('Version '..(F.VERSION or 'unknown')) end
     for key,c in pairs(F.configPanel.checks) do
         local enabled=F.ToolEnabled(key);c:SetChecked(enabled)
         F.configPanel.statusLabels[key]:SetText(enabled and '|cff86d59cEnabled|r' or '|cffaaaaaaDisabled|r')
@@ -56,6 +57,7 @@ function F.OpenConfig()
         emblem:SetTexture('Interface\\AddOns\\HunterTools\\Artwork\\HunterToolsLogo')
         F.MenuText(p,'HunterTools',128,-29,550,'GameFontNormalHuge')
         F.MenuText(p,'Your field kit for the hunt',130,-62,550,'GameFontHighlight')
+        p.versionLabel=F.MenuText(p,'',130,-85,550,'GameFontHighlightSmall')
         F.MenuText(p,'Enable the tools you want. Open a card to adjust its details.',28,-108,700)
         local tools={
             {'food','Pet feeding','Food rules, supplies and hunger alerts.','OpenFoodList','Food & alerts','Ability_Hunter_BeastTraining'},
@@ -81,7 +83,8 @@ function F.OpenConfig()
             local b=CreateFrame('Button',nil,card,'UIPanelButtonTemplate');b:SetSize(154,27);b:SetPoint('BOTTOMRIGHT',-12,12);b:SetText(spec[5]);p.actions[key]=b
             b:SetScript('OnClick',function() if not InCombatLockdown() then F.HideConfigPages();F[method]() end end)
         end
-        F.MenuText(p,'Settings save automatically.  /ht opens this menu.',28,-538,465)
+        local aspect=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');aspect:SetSize(206,27);aspect:SetPoint('TOPLEFT',28,-531);aspect:SetText('Aspect reminders >')
+        aspect:SetScript('OnClick',function() F.OpenAspectSettings() end);p.actions.aspects=aspect
         local weapons=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');weapons:SetSize(206,27);weapons:SetPoint('TOPLEFT',526,-531);weapons:SetText('Weapon comparisons >')
         weapons:SetScript('OnClick',function() F.OpenWeaponComparisonSettings() end);p.actions.weapons=weapons
         F.FinishMenu(p,760,572)
@@ -93,7 +96,7 @@ function F.OpenPetStatusSettings()
     if InCombatLockdown() then F.Print('Open settings after combat.');return end
     F.HideConfigPages()
     if not F.petStatusSettingsPanel then
-        local p=panel('HunterToolsPetStatusSettings','Pet status and mouseover tips',590,620);F.petStatusSettingsPanel=p
+        local p=panel('HunterToolsPetStatusSettings','Pet status and mouseover tips',590,660);F.petStatusSettingsPanel=p
         local help=p:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');help:SetPoint('TOPLEFT',28,-54);help:SetWidth(530)
         help:SetText('Window and tips have independent fields. Tips show your own pet. Drag the window outside combat; right-click it for the tool menu. Unit details pause during combat.')
         p.tips=CreateFrame('CheckButton',nil,p,'UICheckButtonTemplate');p.tips:SetPoint('TOPLEFT',25,-98)
@@ -115,11 +118,12 @@ function F.OpenPetStatusSettings()
             end
         end
         local reset=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');reset:SetSize(180,26);reset:SetPoint('BOTTOM',0,73);reset:SetText('Reset window position');reset:SetScript('OnClick',F.ResetPetStatusPosition)
+        local alerts=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');alerts:SetSize(260,26);alerts:SetPoint('BOTTOM',0,108);alerts:SetText('Pet low-health / death warnings');alerts:SetScript('OnClick',function() F.OpenPetAlertSettings() end)
         local back=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');back:SetSize(160,26);back:SetPoint('BOTTOM',0,30);back:SetText('Back to tools');back:SetScript('OnClick',F.OpenConfig)
     end
     local p=F.petStatusSettingsPanel;local s=F.PetStatusSettings();p.tips:SetChecked(s.tooltipEnabled);p.lock:SetChecked(s.locked)
     for surface,fields in pairs(p.fields) do for key,c in pairs(fields) do c:SetChecked(s[surface][key]) end end
-    if F.FinishMenu then F.FinishMenu(p,590,620) end;p:Show()
+    if F.FinishMenu then F.FinishMenu(p,590,660) end;p:Show()
 end
 function F.OpenRangeSettings()
     if InCombatLockdown() then F.Print('Open settings after combat.'); return end
@@ -132,6 +136,12 @@ function F.OpenRangeSettings()
         p.checks={}
         local animal=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');animal:SetSize(330,30);animal:SetPoint('TOP',0,-155);animal:SetText('Animal mouseover / target information')
         animal:SetScript('OnClick',F.OpenAnimalSettings)
+        local heal=CreateFrame('CheckButton',nil,p,'UICheckButtonTemplate');heal:SetPoint('TOPLEFT',25,-193);p.checks.showPetHealRange=heal
+        local healLabel=heal:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');healLabel:SetPoint('LEFT',heal,'RIGHT',2,0);healLabel:SetText('Warn when pet is out of Mend Pet range')
+        heal:SetScript('OnClick',function()
+            if InCombatLockdown() then heal:SetChecked(F.RangeSettings().showPetHealRange);return end
+            F.RangeSettings().showPetHealRange=heal:GetChecked() and true or false;F.UpdateRangeWindow()
+        end)
         local reset=CreateFrame('Button',nil,p,'UIPanelButtonTemplate'); reset:SetSize(180,26); reset:SetPoint('BOTTOM',0,65); reset:SetText('Reset window position')
         reset:SetScript('OnClick',function()
             if InCombatLockdown() then return end
@@ -149,9 +159,9 @@ function F.OpenInstanceSettings()
     F.InstanceSettings()
     F.HideConfigPages()
     if not F.instanceSettingsPanel then
-        local p=panel('HunterToolsInstanceSettings','Instance settings',480,270); F.instanceSettingsPanel=p
+        local p=panel('HunterToolsInstanceSettings','Instance settings',480,320); F.instanceSettingsPanel=p
         p.checks={}
-        for i,spec in ipairs({{'growl','Check Growl autocast'},{'pack','Check Aspect of the Pack'}}) do
+        for i,spec in ipairs({{'growl','Check Growl autocast'},{'pack','Suggest an alternative to Pack'}}) do
             local b=CreateFrame('CheckButton',nil,p,'UICheckButtonTemplate')
             b:SetPoint('TOPLEFT',25,-55-(i-1)*38)
             local text=b:CreateFontString(nil,'OVERLAY','GameFontHighlight'); text:SetPoint('LEFT',b,'RIGHT',2,0); text:SetText(spec[2])
@@ -160,12 +170,13 @@ function F.OpenInstanceSettings()
         end
         local help=p:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall')
         help:SetPoint('TOPLEFT',30,-145); help:SetWidth(420)
-        help:SetText('On entering a dungeon or raid, ask before disabling the selected effects. Buttons change only your Growl autocast or your own Pack. The prompt waits until combat ends.')
+        help:SetText('At dungeon or raid entry, offer to turn off Growl and choose another learned aspect if your Pack is on. Choices require a click and wait until combat ends. Keeping Pack dismisses that entry reminder.')
+        local aspects=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');aspects:SetSize(230,26);aspects:SetPoint('BOTTOM',0,65);aspects:SetText('No-aspect reminder settings');aspects:SetScript('OnClick',function() F.OpenAspectSettings() end)
         local back=CreateFrame('Button',nil,p,'UIPanelButtonTemplate'); back:SetSize(160,26); back:SetPoint('BOTTOM',0,25); back:SetText('Back to tools')
         back:SetScript('OnClick',F.OpenConfig)
     end
     for key,b in pairs(F.instanceSettingsPanel.checks) do b:SetChecked(F.InstanceSettings()[key]) end
-    if F.FinishMenu then F.FinishMenu(F.instanceSettingsPanel,480,270) end
+    if F.FinishMenu then F.FinishMenu(F.instanceSettingsPanel,480,320) end
     F.instanceSettingsPanel:Show()
 end
 

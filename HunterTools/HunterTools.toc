@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: HunterTools
 ## Author: Gideon (original engine); OpenAI Codex (adaptation and enhancements)
-## Version: 3.1.1
+## Version: 3.1.2
 ## Notes: Hunter tools, each individually enabled or disabled: feeding, ammo, range, pet status and animal tooltips.
 ## SavedVariablesPerCharacter: HunterToolsDB
 ## OptionalDeps: FeedomaticToo
@@ -19,9 +19,12 @@ WeaponCompareUI.lua
 AmmoUI.lua
 FoodList.lua
 InstanceCheck.lua
+AspectReminder.lua
+AspectButton.lua
 ConfigUI.lua
 Range.lua
 PetStatus.lua
+PetAlerts.lua
 PetDatabase.lua
 ForeverPetData.lua
 PetopiaForeverData.lua

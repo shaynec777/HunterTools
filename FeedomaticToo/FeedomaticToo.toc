@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: FeedomaticToo settings migration
 ## Notes: Loads previous character settings for HunterTools. No buttons or events.
-## Version: 3.1.1
+## Version: 3.1.2
 ## SavedVariablesPerCharacter: FeedomaticTooDB
 LegacySettings.lua

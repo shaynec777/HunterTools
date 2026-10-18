@@ -5,9 +5,9 @@ C_Spell={GetSpellName=function(id) return id==6795 and 'Growl' or 'Aspect of the
 GetPetActionInfo=function(i) if i==4 then return 'Growl',nil,false,false,true,true end end
 C_UnitAuras={GetAuraDataBySpellName=function() return {sourceUnit='player'} end}
 local e=F.InstanceEffects(); assert(e.growlOn and e.packOn)
-assert(F.InstanceEffectMacro(e,'both')=='/petautocastoff Growl\n/cancelaura Aspect of the Pack')
+assert(F.InstanceEffectMacro(e,'both')=='/petautocastoff Growl')
 assert(F.InstanceEffectMacro(e,'growl')=='/petautocastoff Growl')
-assert(F.InstanceEffectMacro(e,'pack')=='/cancelaura Aspect of the Pack')
+assert(F.InstanceEffectMacro(e,'pack')=='','Pack must be replaced through the aspect chooser, never cancelled')
 C_UnitAuras.GetAuraDataBySpellName=function() return {sourceUnit='party1'} end
 GetPetActionInfo=function() return 'Growl',nil,false,false,true,false end
 e=F.InstanceEffects(); assert(not e.growlOn and not e.packOn)

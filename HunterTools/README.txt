@@ -8,31 +8,30 @@ HunterTools brings pet feeding, ammunition reminders and upgrades, dungeon check
 
 ## New in this update
 
-- Beast data now includes 622 Petopia Forever creature records, 19 family references, and 32 additional ID-keyed reports from Petopia's community taming sheet, including Vuldren and Ursera. Community reports are labeled unverified; Classic-linked ability teachers remain labeled as such.
-- Beast fields use available local observations first, then Petopia Forever and its community reports, Wowhead Forever, and the retained Classic reference. Missing fields can fall through independently. Family training options are separate from innate abilities.
-- New local beast field journal (`/ht beasts`): save sightings, explicit Beast Lore details, and the first readable spellbook from a newly tamed pet. Collection is enabled by default and can be turned off. Records stay on your character; a copyable export lets you share them manually. Nothing is uploaded automatically.
-- Animal link dialogs offer Petopia, Wowhead Forever and Wowhead Classic copyable addresses, in that order where available.
-- Feeding & alerts now displays a live explanation when reminders are paused. `/ht hungerdebug` prints the current alert status.
+- Optional aspect chooser when no aspect is active, with learned-aspect icons and an intentional no-aspect choice. A movable, lockable aspect button opens a learned-aspect picker on right-click (`/ht aspects`).
+- Instance-entry Pack reminders now offer another learned aspect or an explicit Keep Pack choice. Growl autocast remains a separate click action.
+- Optional large Mend Pet out-of-range warning in the range window, including when no target is selected.
+- Pet low-health and pet-dead warnings (`/ht petalerts`) with independent enable, banner, chat and sound options, a configurable health threshold, and repeat intervals. When Forever restricts health, a native visual banner still warns below the threshold and says OUT OF RANGE TO MEND PET when confirmed too far away. **Restricted-health low warnings cannot trigger sound/chat or timed repeats; death alerts work separately.**
+- The main menu displays the installed addon version.
 
 ## Bug fixes
 
-- Hungry text reminders no longer wait indefinitely for inventory loading. Low-food stock warnings still wait for confirmed counts.
-- Check whether an item is edible before requesting its food metadata, so uncached non-food items cannot block the food scan.
-- Show a normal hungry reminder when usable food is already available, rather than a misleading loading message. Locked food has its own explanation.
-- A newly summoned/tamed pet gets its own initial hunger sound rather than inheriting the previous pet's already-alerted state.
-- Selected food and ammo tabs remain clickable and have a clear active marker instead of appearing disabled.
+- Fixed aspect picker initialization on Forever, including secure handler bodies and frame-reference setup.
+- Finish and save aspect-button dragging safely after combat interrupts a drag.
+- Keep aspect reminders from overlapping the settings pages.
+- Use font-compatible punctuation in the low-health warning and keep its Mend Pet advice range-aware.
 
 ## Tools and controls
 
 - **Food:** one-click feeding or your Feed Pet keybinding, per-pet allowed/blocked lists, food protection, hunger sounds/text reminders and supply warnings. Food catalog and Feeding & alerts have separate tabs.
 - **Ammunition:** track selected ammo types with individual minimums. Configure stock alerts separately from upgrade advice and its notification interval/channel. Engineered ammo is optional. Counts exclude banks and wait through inventory loading.
 - **Range and animals:** movable target window with distance estimates, plus independent mouseover and range-target animal fields. Show roles, abilities/learned ranks, diet and matching bag-food quantities. A family does not guarantee tameability.
-- **Pet status:** movable own-pet window and own-pet mouseover tips, independently selected details, position locking and reset.
+- **Pet status:** movable own-pet window and own-pet mouseover tips, independently selected details, position locking and reset. Independent low-health and death warnings include the native visual fallback described above.
 - **Pet abilities:** `/ht abilities` shows learned/next ranks and teaching animals with levels/zones. Wowhead opens a selected URL: press Ctrl+C, then paste it into a browser. Show pet pictures can be turned off; first-time creature models can load slowly.
-- **Dungeon checks:** offer to disable Growl autocast, your own Aspect of the Pack, or both on entry. Changes require your click and wait until combat ends.
+- **Dungeon checks:** offer to disable Growl autocast and replace your own Aspect of the Pack with another learned aspect on entry. Changes require your click and wait until combat ends.
 - **Experimental weapon comparisons and scope previews:** `/ht weapons` enables/disables tooltip estimates and selects the candidate scope preview. Settings are saved per character.
 
-Use `/ht` or `/huntertools` for the tool menu; `/ht beasts` (collection journal), `/ht hungerdebug` (alert diagnostics), `/ht foods`, `/ht ammo`, `/ht abilities`, `/ht weapons`, and `/ht petsettings` open their respective controls. `/fom` and `/feedomatictoo` remain aliases. Right-click the feeder or pet-status window for the tool menu. Feeding always requires a click or keypress.
+Use `/ht` or `/huntertools` for the tool menu; `/ht aspects` (aspect chooser/button), `/ht petalerts` (health/death warnings), `/ht petalertdebug` (health diagnostics), `/ht beasts` (collection journal), `/ht hungerdebug` (alert diagnostics), `/ht foods`, `/ht ammo`, `/ht abilities`, `/ht weapons`, and `/ht petsettings` open their respective controls. `/fom` and `/feedomatictoo` remain aliases. Right-click the feeder or pet-status window for the tool menu. Feeding always requires a click or keypress.
 
 ## Experimental ranged comparison formula
 
@@ -54,7 +53,7 @@ Open Beast Training to seed or refresh learned ranks. Learned and missing labels
 
 Pet roles, diets and teaching sources combine Petopia Forever, labeled community reports, local observations, Wowhead Forever and a Classic fallback. Live Beast Lore takes priority. The new collection journal still needs broader in-game testing. Unknown details remain unknown; we plan to verify and refine the database after Forever leaves beta.
 
-The menus, animal tooltip changes, ability browser/copy links, ammo recommendations/notifications and depleted-stock behavior have in-game feedback plus automated regression coverage. One equipped-weapon estimate matched the character sheet; candidate weapon and scope effects still need broader testing and remain Experimental. Aspect of the Pack, combined disable, automatic new-ability tracking and some live Beast Lore paths also need broader checks. My hunter isn't level 40 yet, so I haven't been able to test disabling Aspect of the Pack; please let me know how it goes in the comments.
+The menus, animal tooltip changes, ability browser/copy links, ammo recommendations/notifications and depleted-stock behavior have in-game feedback plus automated regression coverage. One equipped-weapon estimate matched the character sheet; candidate weapon and scope effects still need broader testing and remain Experimental. The aspect button, enlarged pet-healing range warning, native low-health banner and its out-of-range wording were confirmed in-game. Learned-rank mouseover updates after a new tame were also confirmed. Combat aspect switching, intentional-cancellation handling, the instance Pack replacement chooser and some Beast Lore paths still need broader checks.
 
 If a feature doesn't work, please leave a comment describing what happened, which feature you were using, and any error message so we can investigate.
 

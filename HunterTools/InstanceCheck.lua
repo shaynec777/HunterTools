@@ -33,9 +33,7 @@ function F.InstanceEffectMacro(e,which)
     if e.growlOn and (which=='growl' or which=='both') then
         table.insert(lines,'/petautocastoff '..e.growl)
     end
-    if e.packOn and (which=='pack' or which=='both') then
-        table.insert(lines,'/cancelaura '..e.pack)
-    end
+    -- Pack is replaced through an explicit aspect choice, never auto-cancelled.
     return table.concat(lines,'\n')
 end
 
@@ -53,7 +51,7 @@ function F.BuildInstancePrompt()
     p.message=p:CreateFontString(nil,'OVERLAY','GameFontHighlight')
     p.message:SetPoint('TOPLEFT',25,-55); p.message:SetWidth(470)
     p.buttons={}
-    for i,spec in ipairs({{'growl','Disable Growl'},{'pack','Disable Pack'},{'both','Disable Both'}}) do
+    for i,spec in ipairs({{'growl','Disable Growl'}}) do
         local b=CreateFrame('Button',nil,p,'SecureActionButtonTemplate,UIPanelButtonTemplate')
         b:SetSize(145,26); b:SetPoint('BOTTOMLEFT',25+(i-1)*160,60)
         b:SetText(spec[2]); b:RegisterForClicks('LeftButtonUp'); b:SetAttribute('useOnKeyDown',false)
@@ -61,17 +59,12 @@ function F.BuildInstancePrompt()
         local choice=spec[1]
         b:SetScript('PostClick',function()
             if InCombatLockdown() then return end
-            -- A user's explicit choice completes this part of the entry warning.
-            if F.instanceEntryEffects then
-                if choice=='growl' or choice=='both' then F.instanceEntryEffects.growl=false end
-                if choice=='pack' or choice=='both' then F.instanceEntryEffects.pack=false end
-            end
             -- Let the client report the result before redrawing the choices.
             F.instanceCheckAt=GetTime()+0.5
         end)
     end
     local keep=CreateFrame('Button',nil,p,'UIPanelButtonTemplate')
-    keep:SetSize(180,26); keep:SetPoint('BOTTOM',0,22); keep:SetText('Keep them on')
+    keep:SetSize(180,26); keep:SetPoint('BOTTOM',0,22); keep:SetText('Keep Growl on')
     keep:SetScript('OnClick',function()
         if InCombatLockdown() then return end
         F.instanceCheckPending=false; p:Hide()
@@ -81,6 +74,8 @@ end
 
 function F.QueueInstanceCheck()
     F.instanceEntryEffects=nil
+    F.instanceAspectRequest=nil
+    F.aspectMissingSince=nil
     F.instanceCheckPending=true
     F.instanceCheckAt=GetTime()+1
 end
@@ -89,18 +84,23 @@ function F.CheckInstancePrompt()
     if InCombatLockdown() then return end
     if F.db and F.db.instanceChecks and F.db.instanceChecks.enabled==false then
         F.instanceCheckPending=false
+        F.instanceAspectRequest=nil
         if F.instancePrompt then F.instancePrompt:Hide() end
+        if F.aspectPrompt and F.aspectPrompt.reason=='pack' then F.aspectPrompt:Hide() end
         return
     end
     local _,class=UnitClass('player')
     local inside,kind=IsInInstance()
     if class~='HUNTER' or not inside or (kind~='party' and kind~='raid') then
         F.instanceCheckPending=false
+        F.instanceAspectRequest=nil
         if F.instancePrompt then F.instancePrompt:Hide() end
+        if F.aspectPrompt and F.aspectPrompt.reason=='pack' then F.aspectPrompt:Hide() end
         return
     end
     if not F.instanceCheckPending or GetTime()<(F.instanceCheckAt or 0) then return end
     local e=F.InstanceEffects()
+    if not e then return end
     local settings=F.db and F.db.instanceChecks or {}
     e.growlOn=e.growlOn and settings.growl~=false
     e.packOn=e.packOn and settings.pack~=false
@@ -112,6 +112,14 @@ function F.CheckInstancePrompt()
     e.packOn=e.packOn and F.instanceEntryEffects.pack
     if not e.growlOn then F.instanceEntryEffects.growl=false end
     if not e.packOn then F.instanceEntryEffects.pack=false end
+    if e.packOn and F.ShowAspectChooser then
+        F.instanceAspectRequest=true
+        if F.instancePrompt then F.instancePrompt:Hide() end
+        F.ShowAspectChooser('pack',e)
+        return
+    end
+    F.instanceAspectRequest=nil
+    if F.aspectPrompt and F.aspectPrompt.reason=='pack' then F.aspectPrompt:Hide() end
     F.BuildInstancePrompt()
     local p=F.instancePrompt
     if not e.growlOn and not e.packOn then
@@ -122,7 +130,7 @@ function F.CheckInstancePrompt()
     local effects={}
     if e.growlOn then table.insert(effects,(F.ReminderPetName() or 'Your pet').."'s Growl autocast") end
     if e.packOn then table.insert(effects,'your Aspect of the Pack') end
-    p.message:SetText(table.concat(effects,' and ')..' is on. Disable for this dungeon or raid?')
+    p.message:SetText(table.concat(effects,' and ')..' is on. Disable Growl autocast for this dungeon or raid?')
     for which,b in pairs(p.buttons) do
         local macro=F.InstanceEffectMacro(e,which)
         b:SetAttribute('macrotext',macro)

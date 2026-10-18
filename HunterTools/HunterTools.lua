@@ -119,6 +119,9 @@ loader:SetScript('OnEvent',function(_,event,a,b,c)
         SLASH_FEEDOMATICTOO4='/huntertools'
         SLASH_FEEDOMATICTOO2='/feedomatictoo'
         SlashCmdList.FEEDOMATICTOO=function(text)
+            if (text or ''):lower():match('^%s*petalertdebug%s*$') then F.DebugPetAlerts();return end
+            if (text or ''):lower():match('^%s*petalerts%s*$') then F.OpenPetAlertSettings();return end
+            if (text or ''):lower():match('^%s*aspects%s*$') then F.OpenAspectSettings();return end
             if (text or ''):lower():match('^%s*hungerdebug%s*$') then F.DebugHungerAlerts();return end
             if (text or ''):lower():match('^%s*beasts%s*$') then F.OpenBeastJournal();return end
             if (text or ''):lower():match('^%s*trainingdebug%s*$') then F.DebugPetTraining(); return end
@@ -162,7 +165,7 @@ loader:SetScript('OnEvent',function(_,event,a,b,c)
     if InCombatLockdown() or F.clickInProgress then return end
     if not F.button then
         F.BuildUI()
-        F.ticker=C_Timer.NewTicker(0.5,function() F.UpdateHappinessBorder(); F.Refresh(); F.CheckAmmoReminder(); F.CheckAmmoUpgradeNotifications(); F.CheckInstancePrompt(); F.UpdateRangeWindow(); F.UpdatePetStatusWindow() end)
+        F.ticker=C_Timer.NewTicker(0.5,function() F.UpdateHappinessBorder(); F.Refresh(); F.CheckAmmoReminder(); F.CheckAmmoUpgradeNotifications(); F.CheckInstancePrompt(); F.CheckAspectPrompt(); F.UpdateAspectButton(); F.UpdateRangeWindow(); F.UpdatePetStatusWindow(); F.CheckPetAlerts() end)
     end
     if F.dragging then
         F.button:StopMovingOrSizing(); F.dragging=false
