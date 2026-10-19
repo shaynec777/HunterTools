@@ -8,17 +8,18 @@ HunterTools brings pet feeding, ammunition reminders and upgrades, dungeon check
 
 ## New in this update
 
-- Movable Tracking button with a right-click picker for learned hunter and profession tracking, including Find Herbs and Find Minerals when known. Active choices have an icon and green marker. Open `/ht tracking` for enable, lock and reset controls.
-- Optional no-tracking reminder offers learned tracking choices, Stay without tracking, and Later (five minutes). Button and reminder can be enabled independently.
-- Tracking and aspect choosers now open at matching positions beside their respective buttons until moved.
-- Tracking, aspect and dungeon alert dialogs can be repositioned and remember their own positions.
+- Compact aspect and tracking lists open beneath their floating buttons on right-click. Green markers identify active choices; opening either list closes the other. Automatic reminder dialogs remain separate.
+- Favorite aspects and tracking abilities with the star beside each choice. Favorites save per character and appear first; aspect favorites survive learning a higher rank. Favorites can be changed outside combat.
+- Native spell tooltips on aspect/tracking choices, aspect reminder choices, and the active spell on each floating button.
+- Beast details and name search for every class. `/ht beastdetail` or `/ht beastdetails` inspects a targeted wild beast, or opens search when no suitable beast is targeted. Add a full or partial name to search directly; `/ht beastsearch` also opens search.
+- Search the bundled beast references and your character's journal by name, with paged results and distinct NPC identities for beasts sharing a name. Detail windows include a search box and preserve data-source labels and unknown fields.
+- Pet Abilities includes a beast-name search that displays results and scrollable details inside the ability browser, with optional portraits and a Back control. Selecting an ability or clearing the beast search returns to teaching animals.
 
 ## Bug fixes and refinements
 
-- Standardize all movable HunterTools buttons, windows and dialogs on **Shift + left-drag outside combat**. Locks remain respected; help text matches the controls.
-- Reduce tracking/aspect chooser width and spacing, and fit the aspect alert height to its available choices.
-- Preserve moved dialog positions across reopening and UI scaling, and safely finish interrupted dialog dragging after combat.
-- Suppress no-tracking reminders during combat, travel, other settings and uncertain tracking state. Remember an intentional no-tracking choice until tracking is activated again.
+- Keep Pet Abilities searches and details in the ability browser rather than switching to the standalone beast window.
+- Give the embedded beast-details panel a solid dark background and raise it above the ability controls for readability.
+- Non-hunters can inspect beast information without enabling hunter display options; hunter learned-ability labels are omitted for other classes. HunterTools itself must be enabled for that character.
 
 ## Tools and controls
 
@@ -26,6 +27,7 @@ HunterTools brings pet feeding, ammunition reminders and upgrades, dungeon check
 - **Ammunition:** track selected ammo types with individual minimums. Configure stock alerts separately from upgrade advice and its notification interval/channel. Engineered ammo is optional. Counts exclude banks and wait through inventory loading.
 - **Range and animals:** movable target window with distance estimates, plus independent mouseover and range-target animal fields. Show roles, abilities/learned ranks, diet and matching bag-food quantities. A family does not guarantee tameability.
 - **Pet status:** movable own-pet window and own-pet mouseover tips, independently selected details, position locking and reset. Independent low-health and death warnings include a persistent native visual when health is restricted. Restricted-health low warnings cannot trigger sound/chat or timed repeats; death alerts work separately.
+- **Beast details (all classes):** `/ht beastdetails` shows a targeted wild beast with a search box, or opens standalone name search without a suitable target. `/ht beastdetails <name>` searches directly. Enable the addon for each character. Unknown Beast Lore data stays unknown; non-hunters have no hunter learned-rank labels.
 - **Pet abilities:** `/ht abilities` shows learned/next ranks and teaching animals with levels/zones. Wowhead opens a selected URL: press Ctrl+C, then paste it into a browser. Show pet pictures can be turned off; first-time creature models can load slowly.
 - **Aspects and tracking:** `/ht aspects` and `/ht tracking` configure separate movable buttons and optional missing-aspect/tracking dialogs. Tracking includes learned profession abilities.
 - **Dungeon checks:** offer to disable Growl autocast and replace your own Aspect of the Pack with another learned aspect on entry. Changes require your click and wait until combat ends.

@@ -143,7 +143,7 @@ function F.AnimalDetails(unit,s)
     if not diet and forever then diet=forever.diet;wowheadDiet=diet~=nil end
     if not diet and F.foreverPetFamilyDiets then diet=F.foreverPetFamilyDiets[family];wowheadDiet=diet~=nil end
     if not diet and F.petFamilyDiets then diet=F.petFamilyDiets[family];baseline=baseline or ((s.diet or s.food) and diet~=nil) end
-    if abilities and F.MarkTargetAbilities and s.abilities then abilities=F.MarkTargetAbilities(abilities) end
+    if abilities and F.MarkTargetAbilities and s.abilities and s.learned~=false then abilities=F.MarkTargetAbilities(abilities) end
     if s.abilities then lines[#lines+1]='Abilities: '..(abilities or 'no database record; inspect with Beast Lore.') end
     local familyInfo=F.petopiaForeverFamilies and F.petopiaForeverFamilies[family]
     if s.abilities and not abilities and familyInfo and familyInfo.learnable and #familyInfo.learnable>0 then
@@ -187,3 +187,141 @@ end
 local inventory=CreateFrame('Frame')
 for _,event in ipairs({'BAG_UPDATE_DELAYED','GET_ITEM_INFO_RECEIVED','PLAYER_ENTERING_WORLD'}) do inventory:RegisterEvent(event) end
 inventory:SetScript('OnEvent',function() foodCache={} end)
+
+-- An explicit lookup is available to every class, independent of hunter UI toggles.
+function F.OpenBeastDetail()
+    if InCombatLockdown() then F.Print('View beast details after combat.');return end
+    if not query(UnitExists,'target') then F.OpenBeastSearch('');return end
+    local _,class=query(UnitClass,'player')
+    local fields={enabled=true,info=true,role=true,abilities=true,diet=true,food=true,learned=class=='HUNTER'}
+    local details=F.AnimalDetails('target',fields)
+    if not details then F.OpenBeastSearch('');return end
+    local name=query(UnitName,'target') or 'Beast'
+    if class~='HUNTER' then details=details..'\nHunter learned-ability status does not apply to this character.' end
+    F.ShowBeastDetail(name,details)
+end
+function F.ShowBeastDetail(name,details)
+    if not F.beastDetailPanel then
+        local p=CreateFrame('Frame','HunterToolsBeastDetail',UIParent,'BackdropTemplate');F.beastDetailPanel=p
+        p:SetSize(500,460);p:SetPoint('CENTER');p:SetFrameStrata('DIALOG');p:SetClampedToScreen(true)
+        p:SetBackdrop({bgFile='Interface\\DialogFrame\\UI-DialogBox-Background',edgeFile='Interface\\DialogFrame\\UI-DialogBox-Border',edgeSize=24})
+        table.insert(UISpecialFrames,'HunterToolsBeastDetail')
+        local close=CreateFrame('Button',nil,p,'UIPanelCloseButton');close:SetPoint('TOPRIGHT',-4,-4)
+        p.search=CreateFrame('EditBox',nil,p,'InputBoxTemplate');p.search:SetSize(315,24);p.search:SetPoint('BOTTOMLEFT',30,12);p.search:SetAutoFocus(false);p.search:SetMaxLetters(100);p.search:SetText('')
+        local function searchBeasts() p.search:ClearFocus();F.OpenBeastSearch(p.search:GetText() or '') end
+        p.search:SetScript('OnEnterPressed',searchBeasts)
+        p.search:SetScript('OnEscapePressed',function(self) self:ClearFocus() end)
+        p.searchButton=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');p.searchButton:SetSize(110,24);p.searchButton:SetPoint('BOTTOMLEFT',360,12);p.searchButton:SetText('Search beasts');p.searchButton:SetScript('OnClick',searchBeasts)
+        p:SetScript('OnHide',function() p.search:ClearFocus() end)
+        p.title=p:CreateFontString(nil,'OVERLAY','GameFontNormalLarge');p.title:SetPoint('TOPLEFT',24,-24);p.title:SetWidth(440);p.title:SetJustifyH('LEFT')
+        local scroll=CreateFrame('ScrollFrame',nil,p,'UIPanelScrollFrameTemplate');p.scroll=scroll
+        scroll:SetPoint('TOPLEFT',24,-65);scroll:SetPoint('BOTTOMRIGHT',-45,48)
+        local content=CreateFrame('Frame',nil,scroll);content:SetWidth(420);scroll:SetScrollChild(content)
+        p.text=content:CreateFontString(nil,'OVERLAY','GameFontHighlight');p.text:SetPoint('TOPLEFT');p.text:SetWidth(420);p.text:SetJustifyH('LEFT');p.text:SetJustifyV('TOP')
+        p.content=content
+    end
+    if F.beastSearchPanel then F.beastSearchPanel:Hide() end
+    local p=F.beastDetailPanel;p.title:SetText(name..' - Beast details');p.text:SetText(details)
+    p.content:SetHeight(math.max(1,p.text:GetStringHeight()+10));p.scroll:SetVerticalScroll(0);p:Show()
+end
+
+-- Search all available sources by literal, case-insensitive partial name.
+function F.SearchBeasts(text)
+    local needle=(text or ''):match('^%s*(.-)%s*$'):lower()
+    if needle=='' then return {} end
+    local ids={}
+    local function add(rows) for id in pairs(rows or {}) do ids[id]=true end end
+    add(F.petCreatureDB);add(F.foreverPetCreatureDB);add(F.petopiaForeverCreatures);add(F.petopiaCommunityCreatures)
+    add(F.db and F.db.beastJournal and F.db.beastJournal.records)
+    local matches={}
+    for id in pairs(ids) do
+        local row=F.BeastRecord(id)
+        if row and type(row.name)=='string' and row.name:lower():find(needle,1,true) then
+            matches[#matches+1]={id=id,record=row}
+        end
+    end
+    table.sort(matches,function(a,b)
+        local an,bn=a.record.name:lower(),b.record.name:lower()
+        if (an==needle)~=(bn==needle) then return an==needle end
+        if an~=bn then return an<bn end
+        return a.id<b.id
+    end)
+    return matches
+end
+function F.OpenBeastRecord(id)
+    if InCombatLockdown() then F.Print('View beast details after combat.');return end
+    local name,details=F.BeastRecordDetails(id)
+    if not details then F.Print('No beast record available.');return end
+    F.ShowBeastDetail(name,details)
+end
+function F.BeastRecordDetails(id)
+    local row=F.BeastRecord(id)
+    if not row then return end
+    local family=row.family or 'Family unknown'
+    local levels=row.minLevel and tostring(row.minLevel) or 'unknown'
+    if row.maxLevel and row.maxLevel~=row.minLevel then levels=levels..'-'..row.maxLevel end
+    local lines={'Database lookup (NPC '..id..')',family..' - level '..levels,
+        'Tameability: '..(row.tameable==true and 'reference says tameable' or row.tameable==false and 'reference says not tameable' or 'unconfirmed'),
+        'Location: '..(row.zone or 'unknown'),'Role: '..F.PetRole(row.family)}
+    local abilities=row.abilities
+    local _,class=query(UnitClass,'player')
+    if abilities and class=='HUNTER' and F.MarkTargetAbilities then abilities=F.MarkTargetAbilities(abilities) end
+    lines[#lines+1]='Abilities: '..(abilities or 'unknown; no recorded abilities')
+    local diet,dietSource=row.diet,row.sources and row.sources.diet
+    if not diet and F.BeastDiet then diet,dietSource=F.BeastDiet(row.family) end
+    lines[#lines+1]='Eats: '..(diet or 'unknown')
+    lines[#lines+1]='In bags: '..F.AnimalFoodCounts(diet,row.minLevel)
+    for _,field in ipairs({'name','family','minLevel','tameable','zone','abilities'}) do
+        local source=row.sources and row.sources[field]
+        if source then lines[#lines+1]=field..' reference: '..source end
+    end
+    if dietSource then lines[#lines+1]='Diet reference: '..dietSource end
+    lines[#lines+1]='Reference data may be incomplete. This lookup does not inspect a live beast.'
+    return row.name or 'Beast',table.concat(lines,'\n')
+end
+function F.OpenBeastSearch(text)
+    if InCombatLockdown() then F.Print('Search beasts after combat.');return end
+    if not F.beastSearchPanel then
+        local p=CreateFrame('Frame','HunterToolsBeastSearch',UIParent,'BackdropTemplate');F.beastSearchPanel=p
+        p:SetSize(620,470);p:SetPoint('CENTER');p:SetFrameStrata('DIALOG');p:SetClampedToScreen(true)
+        p:SetBackdrop({bgFile='Interface\\DialogFrame\\UI-DialogBox-Background',edgeFile='Interface\\DialogFrame\\UI-DialogBox-Border',edgeSize=24})
+        table.insert(UISpecialFrames,'HunterToolsBeastSearch')
+        local close=CreateFrame('Button',nil,p,'UIPanelCloseButton');close:SetPoint('TOPRIGHT',-4,-4)
+        local title=p:CreateFontString(nil,'OVERLAY','GameFontNormalLarge');title:SetPoint('TOPLEFT',24,-24);title:SetText('Search beasts by name')
+        p.input=CreateFrame('EditBox',nil,p,'InputBoxTemplate');p.input:SetSize(425,26);p.input:SetPoint('TOPLEFT',30,-60);p.input:SetAutoFocus(false);p.input:SetMaxLetters(100);p.input:SetText('')
+        p.status=p:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');p.status:SetPoint('TOPLEFT',24,-100);p.status:SetText('Enter all or part of a beast name, then press Search.')
+        p.rows={};p.matches={};p.page=1
+        local function render()
+            local count=#p.matches;local pages=math.max(1,math.ceil(count/10))
+            p.status:SetText(count..' matches | Page '..p.page..' / '..pages..' | Click a beast for details')
+            for i,b in ipairs(p.rows) do
+                local match=p.matches[(p.page-1)*10+i];b:SetShown(match~=nil)
+                if match then
+                    local r=match.record;b.npcID=match.id
+                    b:SetText(r.name..' - '..(r.family or '?')..' - '..(r.zone or 'Location unknown')..' [ID '..match.id..']')
+                else b.npcID=nil end
+            end
+        end
+        local function search()
+            if InCombatLockdown() then F.Print('Search beasts after combat.');return end
+            p.input:ClearFocus();p.matches=F.SearchBeasts(p.input:GetText());p.page=1;render()
+        end
+        p.search=search
+        local go=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');go:SetSize(110,26);go:SetPoint('LEFT',p.input,'RIGHT',12,0);go:SetText('Search');go:SetScript('OnClick',search)
+        p.input:SetScript('OnEnterPressed',search);p.input:SetScript('OnEscapePressed',function(self) self:ClearFocus();p:Hide() end)
+        for i=1,10 do
+            local b=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');p.rows[i]=b
+            b:SetSize(565,26);b:SetPoint('TOPLEFT',24,-123-(i-1)*28)
+            local caption=b:GetFontString();if caption then caption:SetWidth(545);caption:SetWordWrap(false) end
+            b:SetScript('OnClick',function() if b.npcID then F.OpenBeastRecord(b.npcID) end end)
+        end
+        local prev=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');p.previous=prev;prev:SetSize(120,26);prev:SetPoint('BOTTOMLEFT',24,24);prev:SetText('Previous')
+        prev:SetScript('OnClick',function() p.page=math.max(1,p.page-1);render() end)
+        local nextPage=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');p.nextPage=nextPage;nextPage:SetSize(120,26);nextPage:SetPoint('BOTTOMRIGHT',-24,24);nextPage:SetText('Next')
+        nextPage:SetScript('OnClick',function() p.page=math.min(math.max(1,math.ceil(#p.matches/10)),p.page+1);render() end)
+    end
+    local p=F.beastSearchPanel
+    if text then p.input:SetText(text);p.search() end
+    if F.beastDetailPanel then F.beastDetailPanel:Hide() end
+    p:Show()
+end

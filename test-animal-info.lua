@@ -105,3 +105,35 @@ assert(not bird:find('Classic baseline - Forever may differ.',1,true))
 C_TooltipInfo.GetUnit=function() return {lines={{leftText='Diet: Fish'}}} end
 assert(F.TargetPetDetails():find('Eats: Fish',1,true),'live Beast Lore overrides Wowhead family diet')
 print('PASS: direct Wowhead family diets, new taxonomy, and live diet precedence')
+
+-- Explicit beast lookup works on a druid, regardless of hunter display settings.
+local messages={};F.Print=function(text) messages[#messages+1]=text end
+UnitClass=function() return 'Druid','DRUID' end
+UnitName=function() return 'Test Beast' end
+UnitCreatureFamily=function() return 'Boar' end
+UnitGUID=function() return 'Creature-0-123-1-2-3100-0000ABCD' end
+C_TooltipInfo.GetUnit=function() return {lines={{leftText='Abilities: Bite Rank 2'}}} end
+F.MarkTargetAbilities=function() error('non-hunter must not receive learned-status labels') end
+s.target.enabled=false;s.mouseover.enabled=false;F.db.range.enabled=false
+local displayed,heading,height,scroll,shown
+F.beastDetailPanel={
+ title={SetText=function(_,text) heading=text end},
+ text={SetText=function(_,text) displayed=text end,GetStringHeight=function() return 600 end},
+ content={SetHeight=function(_,value) height=value end},
+ scroll={SetVerticalScroll=function(_,value) scroll=value end},Show=function() shown=true end,
+}
+F.OpenBeastDetail()
+assert(shown and heading=='Test Beast - Beast details' and height==610 and scroll==0)
+assert(displayed:find('Bite Rank 2',1,true) and displayed:find('Role:',1,true) and displayed:find('In bags:',1,true))
+assert(displayed:find('does not apply',1,true) and not s.target.enabled and not s.mouseover.enabled)
+combat=true;UnitExists=function() error('must not query target in combat') end
+F.OpenBeastDetail();assert(messages[#messages]=='View beast details after combat.')
+combat=false;UnitExists=function() return false end
+local searches=0;F.OpenBeastSearch=function(text) assert(text=='');searches=searches+1 end
+F.OpenBeastDetail();assert(searches==1)
+UnitExists=function() return true end;UnitCreatureFamily=function() return nil end
+UnitCreatureType=function() return 'Humanoid' end;UnitGUID=function() return 'Creature-0-0-0-0-999999-ABCD' end
+F.OpenBeastDetail();assert(searches>1)
+UnitCreatureType=function() return 'Beast' end;UnitPlayerControlled=function() return true end
+F.OpenBeastDetail();assert(searches>1)
+print('PASS: druid beast lookup, all fields independent of toggles, scroll reset, no hunter learning labels, combat, no target, non-beast and controlled-pet guards')

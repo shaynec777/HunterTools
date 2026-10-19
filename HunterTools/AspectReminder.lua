@@ -1,4 +1,13 @@
 local _,F=...
+local function showSpellTooltip(self)
+    if not GameTooltip then return end
+    local id=self:GetAttribute('spell')
+    if not id then return end
+    GameTooltip:SetOwner(self,'ANCHOR_RIGHT')
+    GameTooltip:SetSpellByID(id)
+    GameTooltip:Show()
+end
+local function hideSpellTooltip() if GameTooltip then GameTooltip:Hide() end end
 local function safe(v) return not issecretvalue or not issecretvalue(v) end
 local function query(fn,...)
     if type(fn)~='function' then return nil,nil,false end
@@ -103,6 +112,9 @@ function F.BuildAspectPrompt()
         local caption=b:GetFontString()
         if caption then caption:ClearAllPoints();caption:SetPoint('LEFT',36,0);caption:SetPoint('RIGHT',-8,0);caption:SetJustifyH('LEFT') end
         b:RegisterForClicks('LeftButtonUp');b:SetAttribute('useOnKeyDown',false);b:SetAttribute('type','spell')
+        b:SetScript('OnEnter',showSpellTooltip)
+        b:SetScript('OnLeave',hideSpellTooltip)
+        b:SetScript('OnHide',hideSpellTooltip)
         b:SetScript('PostClick',function() if not InCombatLockdown() then F.aspectCheckAt=GetTime()+1 end end)
         p.buttons[i]=b
     end
@@ -174,7 +186,7 @@ function F.ShowAspectChooser(reason,e,state)
     p:Show()
 end
 function F.AspectMenuOpen(exclude)
-    for _,key in ipairs({'configPanel','aspectSettingsPanel','instanceSettingsPanel','foodPanel','ammoPanel','rangeSettingsPanel','petStatusSettingsPanel','petAbilityBrowser','beastJournalPanel','aspectPicker','petAlertPanel','trackingSettingsPanel','trackingPicker','petListPanel','animalSettingsPanel','ammoUpgradePanel','protectionPanel','weaponSettingsPanel'}) do
+    for _,key in ipairs({'configPanel','aspectSettingsPanel','instanceSettingsPanel','foodPanel','ammoPanel','rangeSettingsPanel','petStatusSettingsPanel','petAbilityBrowser','beastJournalPanel','aspectPicker','petAlertPanel','trackingSettingsPanel','trackingPicker','trackingDropdown','petListPanel','animalSettingsPanel','ammoUpgradePanel','protectionPanel','weaponSettingsPanel'}) do
         local p=F[key];if key~=exclude and p and p:IsShown() then return true end
     end
     return false

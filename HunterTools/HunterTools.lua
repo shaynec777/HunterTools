@@ -119,6 +119,10 @@ loader:SetScript('OnEvent',function(_,event,a,b,c)
         SLASH_FEEDOMATICTOO4='/huntertools'
         SLASH_FEEDOMATICTOO2='/feedomatictoo'
         SlashCmdList.FEEDOMATICTOO=function(text)
+            local beastQuery=(text or ''):match('^%s*[Bb][Ee][Aa][Ss][Tt][Dd][Ee][Tt][Aa][Ii][Ll][Ss]?%s+(.+)$')
+            if beastQuery then F.OpenBeastSearch(beastQuery);return end
+            if (text or ''):lower():match('^%s*beastsearch%s*$') then F.OpenBeastSearch('');return end
+            if (text or ''):lower():match('^%s*beastdetails?%s*$') then F.OpenBeastDetail();return end
             if (text or ''):lower():match('^%s*petalertdebug%s*$') then F.DebugPetAlerts();return end
             if (text or ''):lower():match('^%s*petalerts%s*$') then F.OpenPetAlertSettings();return end
             if (text or ''):lower():match('^%s*tracking%s*$') then F.OpenTrackingSettings();return end
@@ -139,7 +143,7 @@ loader:SetScript('OnEvent',function(_,event,a,b,c)
             if (text or ''):lower():match('^%s*foods%s*$') then F.OpenFoodList(); return end
             if F.ListCommand(text or '') then return end
             local cmd=(text or ''):lower():match('^%s*(.-)%s*$')
-            if cmd~='on' and cmd~='off' then F.Print('/ht weapons; /ht abilities; /ht ammo; /ht foods; /ht on|off; /ht whitelist|blacklist add|remove <item link or ID>, list, clear. Shift-drag moves the button.'); return end
+            if cmd~='on' and cmd~='off' then F.Print('/ht beastdetail; /ht weapons; /ht abilities; /ht ammo; /ht foods; /ht on|off; /ht whitelist|blacklist add|remove <item link or ID>, list, clear. Shift-drag moves the button.'); return end
             F.db.enabled=cmd=='on'
             if InCombatLockdown() then F.Print('Visibility will update after combat.'); return end
             F.Refresh()

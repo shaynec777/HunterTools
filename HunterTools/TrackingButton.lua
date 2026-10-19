@@ -1,4 +1,13 @@
 local _,F=...
+local function showSpellTooltip(self)
+    if not GameTooltip then return end
+    local id=self:GetAttribute('spell')
+    if not id then return end
+    GameTooltip:SetOwner(self,'ANCHOR_RIGHT')
+    GameTooltip:SetSpellByID(id)
+    GameTooltip:Show()
+end
+local function hideSpellTooltip() if GameTooltip then GameTooltip:Hide() end end
 local function safe(v) return not issecretvalue or not issecretvalue(v) end
 local function query(fn,...)
     if type(fn)~='function' then return end
@@ -73,7 +82,9 @@ function F.BuildTrackingButton()
     end)
     b:SetScript('OnEnter',function(self)
         if not GameTooltip then return end
-        GameTooltip:SetOwner(self,'ANCHOR_RIGHT');GameTooltip:AddLine('HunterTools tracking',1,0.82,0)
+        GameTooltip:SetOwner(self,'ANCHOR_RIGHT')
+        if self.activeSpellID then GameTooltip:SetSpellByID(self.activeSpellID)
+        else GameTooltip:AddLine('HunterTools tracking',1,0.82,0) end
         GameTooltip:AddLine(self.trackingName or 'No active tracking confirmed',1,1,1)
         GameTooltip:AddLine('Right-click: choose a tracking ability.',0.8,0.9,0.8,true)
         GameTooltip:AddLine(F.TrackingSettings().locked and 'Position locked. /ht tracking opens settings.' or 'Shift + left-drag to move. /ht tracking opens settings.',0.8,0.8,0.8,true)
@@ -100,14 +111,24 @@ function F.BuildTrackingButton()
         local caption=choice:GetFontString()
         if caption then caption:ClearAllPoints();caption:SetPoint('LEFT',36,0);caption:SetPoint('RIGHT',-8,0);caption:SetJustifyH('LEFT') end
         choice:RegisterForClicks('LeftButtonUp');choice:SetAttribute('useOnKeyDown',false);choice:SetAttribute('type','spell')
+        choice:SetScript('OnEnter',showSpellTooltip)
+        choice:SetScript('OnLeave',hideSpellTooltip)
+        choice:SetScript('OnHide',hideSpellTooltip)
         choice:SetScript('PostClick',function() if not InCombatLockdown() then p:Hide();F.trackingCheckAt=GetTime()+1 end end)
         if SecureHandlerWrapScript then
             SecureHandlerWrapScript(choice,'OnClick',p,[[return nil, true]],[[self:GetParent():Hide()]])
         end
     end
-    SecureHandlerSetFrameRef(b,'picker',p)
+    local dropdown=F.BuildSpellDropdown('HunterToolsTrackingDropdown',b,32,F.TrackingSettings,F.UpdateTrackingButton);F.trackingDropdown=dropdown
+    SecureHandlerSetFrameRef(b,'picker',dropdown)
+    if F.aspectButton then
+        SecureHandlerSetFrameRef(b,'otherPicker',F.aspectPicker)
+        SecureHandlerSetFrameRef(F.aspectButton,'otherPicker',dropdown)
+    end
     b:SetAttribute('_onclick',[[
         if button == 'RightButton' then
+            local other = self:GetFrameRef('otherPicker')
+            if other then other:Hide() end
             local picker = self:GetFrameRef('picker')
             if picker:IsShown() then picker:Hide() else picker:Show() end
         end
@@ -133,13 +154,16 @@ function F.UpdateTrackingButton()
     local _,class=query(UnitClass,'player')
     local settings=F.TrackingSettings()
     if class~='HUNTER' or (not settings.enabled and not settings.reminder) then
-        if F.trackingButton then F.trackingPicker:Hide();F.trackingButton:Hide() end
+        if F.trackingButton then F.trackingPicker:Hide();F.trackingDropdown:Hide();F.trackingButton:Hide() end
         return
     end
     F.BuildTrackingButton();local b,p=F.trackingButton,F.trackingPicker
     local state=F.TrackingState()
-    if not state then p:Hide();b:Hide();return end
+    if not state then p:Hide();F.trackingDropdown:Hide();b:Hide();return end
+    F.UpdateSpellDropdown(F.trackingDropdown,state,settings,'Tracking')
+    if not settings.enabled then F.trackingDropdown:Hide() end
     local active=state.active
+    b.activeSpellID=active and active.id or nil
     local texture=active and (active.texture or query(C_Spell and C_Spell.GetSpellTexture,active.id))
     b.icon:SetTexture(texture or 132328);b.icon:SetDesaturated(not active)
     b.empty:SetShown(active==nil);b.trackingName=active and active.name or nil

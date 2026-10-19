@@ -2,13 +2,18 @@ local F={db={},Print=function(msg) Fmessage=msg end}
 local all={}
 local function widget()
  local w={scripts={},shown=false,text=''}
- setmetatable(w,{__index=function(_,k) if k=='CreateFontString' then return widget end;if k:match('^[A-Z]') then return function() end end end})
+ setmetatable(w,{__index=function(_,k) if k=='CreateFontString' or k=='CreateTexture' then return widget end;if k:match('^[A-Z]') then return function() end end end})
  function w:SetScript(e,f) self.scripts[e]=f end
  function w:SetText(v) self.text=v end
  function w:SetChecked(v) self.checked=v end
  function w:GetChecked() return self.checked end
  function w:SetCreature(id) self.loadedID=id;self.loadCalls=(self.loadCalls or 0)+1 end
  function w:GetText() return self.text end
+ function w:GetStringHeight() return 100 end
+ function w:GetFrameLevel() return self.frameLevel or 1 end
+ function w:SetFrameLevel(v) self.frameLevel=v end
+ function w:SetAlpha(v) self.alpha=v end
+ function w:SetColorTexture(r,g,b,a) self.color={r,g,b,a} end
  function w:SetEnabled(v) self.enabled=v end
  function w:Show() local was=self.shown;self.shown=true;if not was and self.scripts.OnShow then self.scripts.OnShow(self) end end
  function w:Hide() local was=self.shown;self.shown=false;if was and self.scripts.OnHide then self.scripts.OnHide(self) end end
@@ -134,3 +139,40 @@ for _,row in ipairs(p.animalPortraits) do assert(not row.models) end
 p.pictureCheck:SetChecked(true);p.pictureCheck.scripts.OnClick(p.pictureCheck)
 assert(F.db.petBrowser.showPictures and p.animalPortraits[1].model and p.animalPortraits[1].shown)
 print('PASS: saved picture checkbox, cache clearing, no loading while disabled, paging/reopen persistence and re-enable')
+
+combat=false
+F.PetBrowserSettings().enabled=true
+F.OpenPetAbilityBrowser()
+local browser=F.petAbilityBrowser
+local beastQuery
+F.OpenBeastSearch=function() error('browser search must not open the standalone window') end
+F.OpenBeastRecord=function() error('browser details must stay embedded') end
+F.SearchBeasts=function(text)
+ beastQuery=text
+ if text=='none' or text=='' then return {} end
+ local matches={}
+ for i=1,8 do matches[i]={id=9000+i,record={name='Test Beast '..i,family='Wolf',zone='Test Zone',minLevel=10,sources={name='Petopia Forever'}}} end
+ return matches
+end
+F.BeastRecordDetails=function(id) return 'Test Beast '..id,'Diet and abilities' end
+browser.beastSearch:SetText('Vuldren')
+browser.beastSearch.scripts.OnEnterPressed(browser.beastSearch)
+assert(beastQuery=='Vuldren' and browser.shown and browser.beastSearchMode)
+assert(browser.wowheadButtons[1].text=='Details' and browser.wowheadButtons[1].animal.id==9001)
+browser.animalNext.scripts.OnClick()
+assert(browser.animalPage==2 and browser.wowheadButtons[1].animal.id==9007 and not browser.wowheadButtons[3].shown)
+browser.wowheadButtons[1].scripts.OnClick()
+assert(browser.shown and browser.beastDetails.shown and browser.beastDetails.text.text=='Diet and abilities')
+assert(browser.beastDetails.frameLevel>browser:GetFrameLevel() and browser.beastDetails.alpha==1 and browser.beastDetails.background.color[4]==1)
+browser.beastSearch:SetText('none');browser.beastSearchButton.scripts.OnClick()
+assert(browser.shown and not browser.beastDetails.shown and not browser.wowheadButtons[1].shown and not browser.animalNext.enabled)
+browser.beastSearch:SetText('wolf');browser.beastSearchButton.scripts.OnClick()
+assert(beastQuery=='wolf' and browser.shown)
+browser.abilityButtons[1].scripts.OnClick()
+assert(not browser.beastSearchMode and browser.wowheadButtons[1].text=='Wowhead')
+browser.beastSearch:SetText('');browser.beastSearchButton.scripts.OnClick()
+assert(not browser.beastSearchMode and browser.shown)
+browser.beastSearch:SetText('cat');combat=true
+browser.beastSearchButton.scripts.OnClick()
+assert(beastQuery=='' and browser.shown and Fmessage=='Search beasts after combat.')
+print('PASS: embedded beast search/results/details, pagination, no standalone window, empty cleanup, ability navigation, clear search and combat guard')

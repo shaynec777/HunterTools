@@ -41,12 +41,13 @@ SecureHandlerWrapScript=function(button,script,header,pre,post)
 end
 RegisterStateDriver=function() end
 UISpecialFrames={}
+assert(loadfile('HunterTools/SpellDropdown.lua'))('test',F)
 assert(loadfile('HunterTools/TrackingButton.lua'))('test',F)
 local readTrackingState=F.TrackingState
 settings=F.TrackingSettings();settings.reminder=false
 F.TrackingState=function() return state end
 F.UpdateTrackingButton();local b,p=F.trackingButton,F.trackingPicker
-assert(b.shown and b.empty.shown and b.refs.picker==p and b.attributes._onclick:find('RightButton',1,true))
+assert(b.shown and b.empty.shown and b.refs.picker==F.trackingDropdown and b.attributes._onclick:find('RightButton',1,true))
 assert(p.buttons[1].shown and p.buttons[1].attributes.type=='spell' and p.buttons[1].attributes.spell==14318)
 assert(p.buttons[2].attributes.spell==13163 and not p.buttons[3].shown)
 assert(p.buttons[1].trackingIcon.texture==14328 and p.buttons[1].text=='Tracking of the Hawk')
@@ -129,3 +130,66 @@ rows[1].active='secret';issecretvalue=function(v) return v=='secret' end
 assert(readTrackingState().uncertain)
 F.UpdateTrackingButton();now=500;F.UpdateTrackingButton();assert(not p.shown,'unknown active tracking cannot create a missing-tracking reminder')
 print('PASS: settings controls, combat setting protection and unknown tracking suppression')
+
+-- Hover uses the assigned spell, hides on exit/close, and works in combat.
+local tooltip={}
+GameTooltip={
+    SetOwner=function(_,owner) tooltip.owner=owner end,
+    SetSpellByID=function(_,id) tooltip.id=id end,
+    AddLine=function() end,
+    Show=function() tooltip.shown=true end,
+    Hide=function() tooltip.shown=false end,
+}
+local option=p.buttons[1]
+function option:GetAttribute(key) return self.attributes[key] end
+option:SetAttribute('spell',14318)
+combat=true
+option.scripts.OnEnter(option)
+assert(tooltip.id==14318 and tooltip.owner==option and tooltip.shown)
+option.scripts.OnLeave(option);assert(not tooltip.shown)
+option.scripts.OnEnter(option);option.scripts.OnHide(option);assert(not tooltip.shown)
+option:SetAttribute('spell',nil);tooltip.id=nil
+option.scripts.OnEnter(option);assert(tooltip.id==nil and not tooltip.shown)
+b.activeSpellID=13163;b.scripts.OnEnter(b)
+assert(tooltip.id==13163 and tooltip.owner==b and tooltip.shown)
+b.scripts.OnLeave(b);assert(not tooltip.shown)
+print('PASS: spell tooltips on picker choices and active button, combat hover and cleanup')
+
+combat=false
+local favorites={}
+local menuState={choices={{id=10,key='hawk',name='Hawk'},{id=20,key='monkey',name='Monkey'}},active={id=20}}
+local menu
+local function refresh() F.UpdateSpellDropdown(menu,menuState,favorites,'Test') end
+menu=F.BuildSpellDropdown(nil,b,8,function() return favorites end,refresh)
+refresh()
+assert(menu.buttons[2].text=='|cff86d59c* |rMonkey','active marker follows active spell')
+menu.buttons[2].favorite.scripts.OnClick()
+assert(favorites.favorites.monkey and menu.buttons[1].attributes.spell==20 and menu.buttons[2].attributes.spell==10)
+assert(menu.buttons[1].favorite.text=='|cffffd100*|r' and menu.shown)
+menuState.choices[2].id=21;menuState.active.id=21;refresh()
+assert(menu.buttons[1].attributes.spell==21,'favorite survives a new spell rank')
+combat=true;menu.buttons[1].favorite.scripts.OnClick()
+assert(favorites.favorites.monkey and menu.buttons[1].attributes.spell==21,'combat cannot change favorite or cast mapping')
+combat=false;menu.buttons[1].favorite.scripts.OnClick()
+assert(not favorites.favorites.monkey and menu.buttons[1].attributes.spell==10)
+menuState.choices={};refresh()
+assert(not menu.buttons[1].shown and not menu.buttons[1].favorite.shown and menu.buttons[1].attributes.spell==nil)
+print('PASS: active marker, favorite toggle/order, rank upgrades, combat guard and stale choice cleanup')
+
+-- The second-built button wires both secure handlers, regardless of build order.
+combat=false
+F.trackingButton=nil
+F.aspectButton=widget();F.aspectPicker=widget()
+F.BuildTrackingButton()
+local current=F.trackingButton
+local own=current.refs.picker
+local other=F.aspectPicker
+assert(current.refs.otherPicker==other and F.aspectButton.refs.otherPicker==own)
+function current:GetFrameRef(key) return self.refs[key] end
+local click=assert(loadstring('return function(self,button) '..current.attributes._onclick..' end'))()
+other:Show();own:Hide();combat=true
+click(current,'RightButton');assert(own.shown and not other.shown)
+other:Show();click(current,'RightButton');assert(not own.shown and not other.shown)
+click(current,'LeftButton');assert(not own.shown)
+current.refs.otherPicker=nil;click(current,'RightButton');assert(own.shown)
+print('PASS: secure mutual menu exclusion, same-button toggle, missing peer, and both construction orders')

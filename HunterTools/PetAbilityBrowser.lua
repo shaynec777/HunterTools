@@ -133,11 +133,53 @@ function F.SetPetBrowserPortrait(portrait,animal)
         model.failed=true;model:Hide();portrait.fallback:SetText('?')
     end
 end
+function F.ShowPetBrowserBeastDetails(id)
+    if InCombatLockdown() then return end
+    local name,details=F.BeastRecordDetails(id)
+    if not details then return end
+    local p=F.petAbilityBrowser
+    if not p.beastDetails then
+        local d=CreateFrame('Frame',nil,p,'BackdropTemplate');p.beastDetails=d
+        d:SetPoint('TOPLEFT',p,'TOPLEFT',306,-160);d:SetSize(610,360);d:EnableMouse(true)
+        d:SetFrameLevel(p:GetFrameLevel()+20);d:SetAlpha(1)
+        d.background=d:CreateTexture(nil,'BACKGROUND');d.background:SetAllPoints();d.background:SetColorTexture(0.025,0.035,0.03,1)
+        d:SetBackdrop({bgFile='Interface\\Buttons\\WHITE8X8',edgeFile='Interface\\Tooltips\\UI-Tooltip-Border',edgeSize=12});d:SetBackdropColor(0.035,0.047,0.044,1)
+        d.title=label(d,'',14,-14,550,'GameFontNormal')
+        local scroll=CreateFrame('ScrollFrame',nil,d,'UIPanelScrollFrameTemplate');d.scroll=scroll
+        scroll:SetPoint('TOPLEFT',14,-48);scroll:SetPoint('BOTTOMRIGHT',-34,16)
+        local content=CreateFrame('Frame',nil,scroll);content:SetWidth(550);scroll:SetScrollChild(content);d.content=content
+        d.text=label(content,'',0,0,550,'GameFontHighlight')
+        button(d,'Back',530,-10,65,function() d:Hide() end)
+    end
+    local d=p.beastDetails;d.title:SetText(name);d.text:SetText(details)
+    d.content:SetHeight(math.max(1,d.text:GetStringHeight()+10));d.scroll:SetVerticalScroll(0);d:Show()
+end
+local function refreshBeastSearch(p,showPictures)
+    local matches=p.beastMatches or {};local pages=math.max(1,math.ceil(#matches/6))
+    p.animalPage=math.min(p.animalPage or 1,pages)
+    p.sourceTitle:SetText('Beast name search')
+    p.sourceNote:SetText(#matches>0 and 'All beast references and your journal.\nClick Details to inspect a result here.' or 'No matching beasts. Try another name.\nClear the beast name and Search to return to ability teachers.')
+    for i,t in ipairs(p.animalRows) do
+        local match=matches[(p.animalPage-1)*6+i];local a
+        if match then
+            local r=match.record
+            a={id=match.id,name=r.name,family=r.family or 'Unknown',zone=r.zone or 'Location unknown',levels=tostring(r.minLevel or '?'),reference=r.sources and r.sources.name}
+            if r.maxLevel and r.maxLevel~=r.minLevel then a.levels=a.levels..'-'..r.maxLevel end
+        end
+        t:ClearAllPoints();t:SetPoint('TOPLEFT',showPictures and 576 or 510,-242-(i-1)*46);t:SetWidth(showPictures and 239 or 305)
+        t:SetText(a and F.PetBrowserAnimalText(a) or '')
+        F.SetPetBrowserPortrait(p.animalPortraits[i],a)
+        local b=p.wowheadButtons[i];b.animal=a;b.beastResult=match~=nil;b:SetText('Details');if match then b:Show() else b:Hide() end
+    end
+    p.animalPages:SetText(('%d beasts | Page %d/%d'):format(#matches,p.animalPage,pages))
+    p.animalPrev:SetEnabled(p.animalPage>1);p.animalNext:SetEnabled(p.animalPage<pages)
+end
 function F.RefreshPetAbilityBrowser()
     local p=F.petAbilityBrowser
     if not p or not p:IsShown() or InCombatLockdown() then return end
     local showPictures=F.PetBrowserSettings().showPictures
     p.pictureCheck:SetChecked(showPictures)
+    if p.beastSearchMode then refreshBeastSearch(p,showPictures);return end
     local query=(p.search:GetText() or ''):lower()
     local filtered={}
     for _,a in ipairs(F.petBrowserAbilities) do if query=='' or a.name:lower():find(query,1,true) then filtered[#filtered+1]=a end end
@@ -189,7 +231,7 @@ function F.RefreshPetAbilityBrowser()
         t:ClearAllPoints();t:SetPoint('TOPLEFT',showPictures and 576 or 510,-242-(i-1)*46);t:SetWidth(showPictures and 239 or 305)
         t:SetText(a and F.PetBrowserAnimalText(a) or '')
         F.SetPetBrowserPortrait(p.animalPortraits[i],a)
-        local b=p.wowheadButtons[i];b.animal=a
+        local b=p.wowheadButtons[i];b.animal=a;b.beastResult=false;b:SetText('Wowhead')
         if F.PetAnimalWowheadURL(a) then b:Show() else b:Hide() end
     end
     local state=F.PetBrowserRankStatus(selected,chosen.rank)
@@ -219,7 +261,7 @@ function F.OpenPetAbilityBrowser()
         label(p,'Choose an ability, then a rank. Green = cached learned; red = cached missing; yellow = unknown.',24,-52,885)
         p.search=CreateFrame('EditBox',nil,p,'InputBoxTemplate');p.search:SetSize(240,25);p.search:SetPoint('TOPLEFT',28,-80);p.search:SetAutoFocus(false);p.search:SetMaxLetters(60)
         p.search:SetScript('OnEscapePressed',function(self) self:ClearFocus() end)
-        p.search:SetScript('OnTextChanged',function() p.abilityPage=1;p.selectedKey=nil;p.selectedRank=nil;p.animalPage=1;F.RefreshPetAbilityBrowser() end)
+        p.search:SetScript('OnTextChanged',function() p.beastSearchMode=false;if p.beastDetails then p.beastDetails:Hide() end;p.abilityPage=1;p.selectedKey=nil;p.selectedRank=nil;p.animalPage=1;F.RefreshPetAbilityBrowser() end)
         label(p,'Search abilities',290,-86,190)
         p.pictureCheck=CreateFrame('CheckButton',nil,p,'UICheckButtonTemplate');p.pictureCheck:SetPoint('TOPLEFT',510,-78)
         label(p,'Show pet pictures',546,-86,300)
@@ -227,7 +269,19 @@ function F.OpenPetAbilityBrowser()
             F.PetBrowserSettings().showPictures=self:GetChecked() and true or false
             F.RefreshPetAbilityBrowser()
         end)
-        p.summary=label(p,'',24,-117,890);p.summary:SetHeight(42)
+        label(p,'Beast name',510,-119,78)
+        p.beastSearch=CreateFrame('EditBox',nil,p,'InputBoxTemplate');p.beastSearch:SetSize(200,25);p.beastSearch:SetPoint('TOPLEFT',594,-112);p.beastSearch:SetAutoFocus(false);p.beastSearch:SetMaxLetters(100);p.beastSearch:SetText('')
+        local function searchBeasts()
+            if InCombatLockdown() then F.Print('Search beasts after combat.');return end
+            local text=p.beastSearch:GetText() or ''
+            p.beastSearch:ClearFocus();p.beastSearchMode=text:match('%S')~=nil;p.beastMatches=F.SearchBeasts(text);p.animalPage=1
+            if p.beastDetails then p.beastDetails:Hide() end
+            F.RefreshPetAbilityBrowser()
+        end
+        p.beastSearch:SetScript('OnEnterPressed',searchBeasts)
+        p.beastSearch:SetScript('OnEscapePressed',function(self) self:ClearFocus() end)
+        p.beastSearchButton=button(p,'Search beasts',806,-112,105,searchBeasts)
+        p.summary=label(p,'',24,-117,470);p.summary:SetHeight(42)
         label(p,'Abilities',24,-164,270,'GameFontNormal')
         p.rankTitle=label(p,'Ranks',310,-164,180,'GameFontNormal')
         p.sourceTitle=label(p,'Teaching animals',510,-164,400,'GameFontNormal')
@@ -235,12 +289,12 @@ function F.OpenPetAbilityBrowser()
         p.abilityButtons={};p.rankButtons={};p.animalRows={};p.wowheadButtons={};p.animalPortraits={}
         for i=1,12 do
             local b=button(p,'',24,-190-(i-1)*27,270,function() end);p.abilityButtons[i]=b
-            b:SetScript('OnClick',function() if InCombatLockdown() or not b.ability then return end;p.selectedKey=b.ability.key;p.selectedRank=nil;p.animalPage=1;F.RefreshPetAbilityBrowser() end)
+            b:SetScript('OnClick',function() if InCombatLockdown() or not b.ability then return end;p.beastSearchMode=false;if p.beastDetails then p.beastDetails:Hide() end;p.selectedKey=b.ability.key;p.selectedRank=nil;p.animalPage=1;F.RefreshPetAbilityBrowser() end)
         end
         local maxRanks=0;for _,a in ipairs(F.petBrowserAbilities) do maxRanks=math.max(maxRanks,#a.ranks) end
         for i=1,maxRanks do
             local b=button(p,'',310,-190-(i-1)*27,180,function() end);p.rankButtons[i]=b
-            b:SetScript('OnClick',function() if InCombatLockdown() or not b.rank then return end;p.selectedRank=b.rank.rank;p.animalPage=1;F.RefreshPetAbilityBrowser() end)
+            b:SetScript('OnClick',function() if InCombatLockdown() or not b.rank then return end;p.beastSearchMode=false;if p.beastDetails then p.beastDetails:Hide() end;p.selectedRank=b.rank.rank;p.animalPage=1;F.RefreshPetAbilityBrowser() end)
         end
         for i=1,6 do
             local y=-242-(i-1)*46
@@ -249,7 +303,7 @@ function F.OpenPetAbilityBrowser()
             p.animalPortraits[i]=portrait
             local t=label(p,'',576,y,239);t:SetHeight(44);p.animalRows[i]=t
             local b=button(p,'Wowhead',824,y-6,86,function() end);p.wowheadButtons[i]=b
-            b:SetScript('OnClick',function() if b.animal then F.OpenPetAnimalWowhead(b.animal) end end)
+            b:SetScript('OnClick',function() if b.animal then if b.beastResult then F.ShowPetBrowserBeastDetails(b.animal.id) else F.OpenPetAnimalWowhead(b.animal) end end end)
         end
         p.abilityPages=label(p,'',24,-522,270);p.animalPages=label(p,'',510,-522,400)
         p.abilityPrev=button(p,'Previous',24,-546,125,function() p.abilityPage=math.max(1,p.abilityPage-1);F.RefreshPetAbilityBrowser() end)
@@ -260,7 +314,7 @@ function F.OpenPetAbilityBrowser()
         button(p,'Back to tools',776,-546,135,F.OpenConfig)
         label(p,'Ranks/levels: Forever client reference. Availability may vary in beta. Lower ranks are inferred from the highest learned rank.',24,-582,888)
         p:SetScript('OnShow',F.RefreshPetAbilityBrowser)
-        p:SetScript('OnHide',function() if F.wowheadLinkPanel then F.wowheadLinkPanel:Hide() end end)
+        p:SetScript('OnHide',function() p.search:ClearFocus();p.beastSearch:ClearFocus();if F.wowheadLinkPanel then F.wowheadLinkPanel:Hide() end end)
         local elapsed=0
         p:SetScript('OnUpdate',function(_,dt) elapsed=elapsed+dt;if elapsed>=1 then elapsed=0;F.RefreshPetAbilityBrowser() end end)
         p:SetScript('OnEvent',function(_,event) if event=='PLAYER_REGEN_DISABLED' then p:Hide() end end)
