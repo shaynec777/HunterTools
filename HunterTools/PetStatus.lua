@@ -14,7 +14,7 @@ local function text(v) return type(v)=='string' and v:find('%S') and v or nil en
 F.petStatusFields={
     {'identity','Level and family'},{'role','Pet role'},{'health','Health'},{'focus','Focus'},
     {'happiness','Happiness and damage modifier'},{'loyalty','Loyalty and trend'},
-    {'training','Training points'},{'diet','Diet'},{'food','Food supply and next food'},
+    {'training','Training points'},{'abilities','Learned abilities'},{'diet','Diet'},{'food','Food supply and next food'},
     {'feeding','Feeding status'},{'lastFeed','Last successful feeding'},
 }
 function F.PetStatusSettings()
@@ -38,6 +38,40 @@ local function resource(current,maximum)
     if not number(current) or not number(maximum) or current<0 or maximum<=0 then return 'Unavailable' end
     return ('%d / %d (%d%%)'):format(current,maximum,math.floor(current/maximum*100+0.5))
 end
+function F.CurrentPetAbilities()
+    if InCombatLockdown() then return 'Unavailable during combat' end
+    if not query(UnitExists,'pet') then return 'No pet' end
+    local book=C_SpellBook
+    local count=query(book and book.HasPetSpells or HasPetSpells)
+    if not number(count) or count<0 or count>200 or count~=math.floor(count) then return 'Pet spellbook unavailable; try again after it loads.' end
+    if count==0 then return 'Pet spellbook loading; no abilities confirmed yet.' end
+    local bank=Enum and Enum.SpellBookSpellBank and Enum.SpellBookSpellBank.Pet
+    local abilities,seen={},{};local partial=false
+    for i=1,count do
+        local info=bank and query(book and book.GetSpellBookItemInfo,i,bank)
+        local id=type(info)=='table' and safe(info.spellID) and info.spellID or nil
+        if not number(id) and GetSpellBookItemInfo then local _,legacy=query(GetSpellBookItemInfo,i,'pet');id=legacy end
+        local name,rank
+        if number(id) and id>0 then
+            name=text(query(C_Spell and C_Spell.GetSpellName,id))
+            rank=text(query(C_Spell and C_Spell.GetSpellSubtext,id))
+        end
+        if not name then
+            if bank and book and book.GetSpellBookItemName then name,rank=query(book.GetSpellBookItemName,i,bank)
+            elseif GetSpellBookItemName then name,rank=query(GetSpellBookItemName,i,'pet') end
+            name=text(name);rank=text(rank)
+        end
+        if name then
+            local entry=name..(rank and (' ('..rank..')') or '')
+            local key=number(id) and id or entry
+            if not seen[key] then abilities[#abilities+1]=entry;seen[key]=true end
+        else partial=true end
+    end
+    table.sort(abilities)
+    local result=#abilities>0 and table.concat(abilities,'; ') or 'No readable abilities yet.'
+    if partial then result=result..' (Partial list; spellbook data loading.)' end
+    return result
+end
 function F.PetStatusData()
     -- Never inspect restricted unit values or inventory during combat.
     if InCombatLockdown() then return {name='Pet status',paused=true} end
@@ -45,7 +79,7 @@ function F.PetStatusData()
     if not exists then return {name='No pet',missing=true} end
     local d={name=text(query(UnitName,'pet')) or 'Your pet',guid=query(UnitGUID,'pet')}
     local level=query(UnitLevel,'pet'); local family=text(query(UnitCreatureFamily,'pet'))
-    d.identity=(number(level) and level>0 and ('Level '..level) or 'Level unavailable')..' • '..(family or 'Family unavailable')
+    d.identity=(number(level) and level>0 and ('Level '..level) or 'Level unavailable')..' â€¢ '..(family or 'Family unavailable')
     d.role=F.PetRole and F.PetRole(family) or 'Unknown'
     local hp,maxHP=query(UnitHealth,'pet'),query(UnitHealthMax,'pet')
     local focus,maxFocus=query(UnitPower,'pet',2),query(UnitPowerMax,'pet',2)
@@ -55,40 +89,41 @@ function F.PetStatusData()
     local petInfo=C_PetInfo or {}
     local happiness,damage,rate=query(petInfo.GetPetHappiness)
     d.happiness=({[1]='Unhappy',[2]='Content',[3]='Happy'})[happiness] or 'Unavailable'
-    if number(damage) then d.happiness=d.happiness..(' • %g%% damage'):format(damage) end
+    if number(damage) then d.happiness=d.happiness..(' â€¢ %g%% damage'):format(damage) end
     d.happinessValue=happiness
     d.loyalty=text(query(petInfo.GetPetLoyalty)) or 'Unavailable'
-    if number(rate) then d.loyalty=d.loyalty..' • '..(rate>0 and 'rising' or rate<0 and 'falling' or 'steady') end
+    if number(rate) then d.loyalty=d.loyalty..' â€¢ '..(rate>0 and 'rising' or rate<0 and 'falling' or 'steady') end
     local total,used=query(petInfo.GetPetTrainingPoints)
     d.training=number(total) and number(used) and total>=used and ('%d available / %d total (%d spent)'):format(total-used,total,used) or 'Unavailable'
     d.diet=F.PetDietText and F.PetDietText():gsub('^Pet eats: ','') or 'Unavailable'
     local s=F.PetStatusSettings()
+    if s.windowFields.abilities or (s.tooltipEnabled and s.tooltipFields.abilities) then d.abilities=F.CurrentPetAbilities() end
     if s.windowFields.food or (s.tooltipEnabled and s.tooltipFields.food) then
         if d.guid~=F.petStatusFoodPet then F.bagsDirty=true; F.petStatusFoodPet=d.guid end
         if F.FindFood and (F.bagsDirty or F.foodCount==nil or F.foodEntryPending) then F.FindFood() end
     end
     if F.foodEntryPending or F.pendingItems or F.lockedFood or F.foodCount==nil then
-        d.food='Inventory settling…'
+        d.food='Inventory settlingâ€¦'
     else
         d.food=('%d suitable item%s'):format(F.foodCount,F.foodCount==1 and '' or 's')
-        if F.food and text(F.food.name) then d.food=d.food..' • Next: '..F.food.name end
+        if F.food and text(F.food.name) then d.food=d.food..' â€¢ Next: '..F.food.name end
     end
     local dead=query(UnitIsDeadOrGhost,'pet')
     local effect=F.FEED_EFFECT and query(C_Spell and C_Spell.GetSpellName,F.FEED_EFFECT)
     local aura=effect and query(C_UnitAuras and C_UnitAuras.GetAuraDataBySpellName,'pet',effect,'HELPFUL')
-    d.feeding=dead and 'Pet is dead' or aura and 'Being fed' or happiness==3 and 'Happy — no feeding needed' or (happiness==1 or happiness==2) and 'Hungry' or 'Unavailable'
+    d.feeding=dead and 'Pet is dead' or aura and 'Being fed' or happiness==3 and 'Happy â€” no feeding needed' or (happiness==1 or happiness==2) and 'Hungry' or 'Unavailable'
     local last=d.guid and type(F.db.petLastFeeds)=='table' and F.db.petLastFeeds[d.guid]
     d.lastFeed='Not recorded yet'
     if type(last)=='table' and type(last.food)=='string' and number(last.at) then
         local now=query(time)
         if number(now) and now>=last.at then
             local minutes=math.floor((now-last.at)/60)
-            d.lastFeed=last.food..(minutes==0 and ' • just now' or (' • %d min ago'):format(minutes))
+            d.lastFeed=last.food..(minutes==0 and ' â€¢ just now' or (' â€¢ %d min ago'):format(minutes))
         end
     end
     return d
 end
-local labels={identity='Pet',role='Role',health='Health',focus='Focus',happiness='Happiness',loyalty='Loyalty',training='Training',diet='Diet',food='Food',feeding='Feeding',lastFeed='Last fed'}
+local labels={identity='Pet',role='Role',health='Health',focus='Focus',happiness='Happiness',loyalty='Loyalty',training='Training',abilities='Learned abilities',diet='Diet',food='Food',feeding='Feeding',lastFeed='Last fed'}
 function F.PetStatusLines(data,fields)
     if data.paused then return {{'Combat','Updates paused until combat ends'}} end
     if data.missing then return {{'Pet','Summon a hunter pet to see its status'}} end
@@ -148,7 +183,7 @@ function F.UpdatePetStatusWindow()
         p:SetBackdrop({bgFile='Interface\\DialogFrame\\UI-DialogBox-Background',edgeFile='Interface\\Tooltips\\UI-Tooltip-Border',edgeSize=12})
         p.portrait=p:CreateTexture(nil,'ARTWORK');p.portrait:SetSize(40,40);p.portrait:SetPoint('TOPLEFT',12,-12)
         p.name=p:CreateFontString(nil,'OVERLAY','GameFontNormal');p.name:SetPoint('TOPLEFT',62,-17);p.name:SetWidth(235);p.name:SetJustifyH('LEFT');p.name:SetWordWrap(false)
-        p.header=p:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');p.header:SetPoint('TOPLEFT',62,-35);p.header:SetText('Pet status • right-click: tool menu')
+        p.header=p:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');p.header:SetPoint('TOPLEFT',62,-35);p.header:SetText('Pet status â€¢ right-click: tool menu')
         local function bar(color)
             local b=CreateFrame('StatusBar',nil,p);b:SetHeight(18);b:SetWidth(286);b:SetStatusBarTexture('Interface\\TargetingFrame\\UI-StatusBar');b:SetStatusBarColor(unpack(color))
             local bg=b:CreateTexture(nil,'BACKGROUND');bg:SetAllPoints();bg:SetColorTexture(0.1,0.1,0.1,0.8)

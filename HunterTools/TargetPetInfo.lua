@@ -147,7 +147,7 @@ function F.AnimalDetails(unit,s)
     if s.abilities then lines[#lines+1]='Abilities: '..(abilities or 'no database record; inspect with Beast Lore.') end
     local familyInfo=F.petopiaForeverFamilies and F.petopiaForeverFamilies[family]
     if s.abilities and not abilities and familyInfo and familyInfo.learnable and #familyInfo.learnable>0 then
-        lines[#lines+1]='Family training options: '..table.concat(familyInfo.learnable,', ')..' (Petopia Forever; innate ranks unknown).'
+        lines[#lines+1]='Family training options: '..table.concat(familyInfo.learnable,', ')..' ('..(familyInfo.trainingReference or 'Petopia Forever')..'; innate ranks unknown).'
     end
     if s.diet then lines[#lines+1]='Eats: '..(diet or 'not revealed; inspect with Beast Lore.') end
     if s.food then lines[#lines+1]='In bags: '..F.AnimalFoodCounts(diet,level) end
@@ -213,7 +213,8 @@ function F.ShowBeastDetail(name,details)
         p.search:SetScript('OnEscapePressed',function(self) self:ClearFocus() end)
         p.searchButton=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');p.searchButton:SetSize(110,24);p.searchButton:SetPoint('BOTTOMLEFT',360,12);p.searchButton:SetText('Search beasts');p.searchButton:SetScript('OnClick',searchBeasts)
         p:SetScript('OnHide',function() p.search:ClearFocus() end)
-        p.title=p:CreateFontString(nil,'OVERLAY','GameFontNormalLarge');p.title:SetPoint('TOPLEFT',24,-24);p.title:SetWidth(440);p.title:SetJustifyH('LEFT')
+        p.title=p:CreateFontString(nil,'OVERLAY','GameFontNormalLarge');p.title:SetPoint('TOPLEFT',24,-24);p.title:SetWidth(320);p.title:SetJustifyH('LEFT')
+        local watch=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');watch:SetSize(110,24);watch:SetPoint('TOPRIGHT',-28,-30);watch:SetText('Watch mob');watch:SetScript('OnClick',function() if F.WatchMob and F.WatchMob(p.mobName) then F.OpenMobFinder() end end)
         local scroll=CreateFrame('ScrollFrame',nil,p,'UIPanelScrollFrameTemplate');p.scroll=scroll
         scroll:SetPoint('TOPLEFT',24,-65);scroll:SetPoint('BOTTOMRIGHT',-45,48)
         local content=CreateFrame('Frame',nil,scroll);content:SetWidth(420);scroll:SetScrollChild(content)
@@ -221,7 +222,7 @@ function F.ShowBeastDetail(name,details)
         p.content=content
     end
     if F.beastSearchPanel then F.beastSearchPanel:Hide() end
-    local p=F.beastDetailPanel;p.title:SetText(name..' - Beast details');p.text:SetText(details)
+    local p=F.beastDetailPanel;p.mobName=name;p.title:SetText(name..' - Beast details');p.text:SetText(details)
     p.content:SetHeight(math.max(1,p.text:GetStringHeight()+10));p.scroll:SetVerticalScroll(0);p:Show()
 end
 

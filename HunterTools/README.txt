@@ -66,3 +66,6 @@ Original feeding engine: FeedPetForever by Gideon (MIT licensed). Adaptation and
 Food and partial Forever reference: Wowhead Forever. Beast/family data: [Petopia Forever](https://www.wow-petopia.com/forever/) and xWillawisp's linked community taming sheet. Classic ability/diet baseline: [Petopia Classic](https://www.wow-petopia.com/classic/abilities.php). See PET-DATA-SOURCES.md and WEAPON-COMPARISONS.md for scope, formula sources and limitations. Buff-food detection recognizes English Well Fed tooltip text; manually block any special foods it misses.
 
 Thanks to Raytchel Bates and Vanauge Imnewtorp for their suggestions!
+
+3.1.5: Finder tools are under Finders in the main menu, or /ht mobfinder and /ht playerfinder. Detection offers a user-clicked Target button; visible targeted nameplates receive a brief highlight. Map markers/arrows require public location data and are unavailable for ordinary detections without it. No Questie dependency. Player names support Forever surnames; optional partial matching is available. Current pet details can show learned pet spellbook abilities.
+Auto Shot comparisons assume stationary firing; the October 15 update requires standing still for 0.5 seconds before firing. Pet damage, expertise and critical strikes are not simulated.

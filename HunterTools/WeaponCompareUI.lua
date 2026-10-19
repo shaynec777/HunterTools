@@ -30,7 +30,7 @@ function F.OpenWeaponComparisonSettings()
         end
         local scopeHelp=text('Scope choices filter by your level. Each hovered weapon is also checked against the scope\'s minimum item level. These weapon-level rules use a Classic baseline; confirm application in Forever. Scopes can be obtained from an engineer; crafting skill is not a requirement to preview them.',28,-466,590)
         scopeHelp:SetHeight(55)
-        local limits=text('Auto Shot only, before armor, misses and crit. Uses live buffs and weapon stat changes; does not simulate a rotation, procs, stat multipliers or weapon-specific talent changes.',28,-525,590)
+        local limits=text('Stationary Auto Shot only; requires 0.5 seconds standing still. Before armor, misses and crit. Uses live buffs and weapon stat changes; does not simulate a rotation, procs, stat multipliers or weapon-specific talent changes.',28,-525,590)
         limits:SetHeight(35)
         local back=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');back:SetSize(180,27);back:SetPoint('BOTTOM',0,22);back:SetText('Back to tools');back:SetScript('OnClick',F.OpenConfig)
         function p:Refresh()

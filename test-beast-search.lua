@@ -77,3 +77,17 @@ SlashCmdList.FEEDOMATICTOO('beastdetail');assert(targetLookup)
 targetLookup=false;SlashCmdList.FEEDOMATICTOO('beastdetails');assert(targetLookup)
 SlashCmdList.FEEDOMATICTOO('beastdetails Vuldren');assert(queryText=='Vuldren')
 print('PASS: next/previous pages and actual slash-command routing preserve targeted lookup')
+
+local watched,finderOpened
+F.WatchMob=function(name) watched=name end
+F.OpenMobFinder=function() finderOpened=true end
+SlashCmdList.FEEDOMATICTOO('mobfinder');assert(finderOpened)
+finderOpened=false;SlashCmdList.FEEDOMATICTOO(' MOBFINDER Wolf Alpha');assert(finderOpened and watched=='Wolf Alpha')
+print('PASS: Mob Finder slash-command routing')
+
+local playerWatch,playerOpened
+F.WatchPlayer=function(name) playerWatch=name end
+F.OpenPlayerFinder=function() playerOpened=true end
+SlashCmdList.FEEDOMATICTOO('playerfinder');assert(playerOpened)
+playerOpened=false;SlashCmdList.FEEDOMATICTOO(' PLAYERFINDER Leona Star');assert(playerOpened and playerWatch=='Leona Star')
+print('PASS: Player Finder slash-command routing')

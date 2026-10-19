@@ -16,7 +16,7 @@ local function panel(name,title,w,h)
     return p
 end
 function F.HideConfigPages()
-    for _,key in ipairs({'configPanel','foodPanel','ammoPanel','instanceSettingsPanel','rangeSettingsPanel','petStatusSettingsPanel','petListPanel','animalSettingsPanel','petAbilityBrowser','ammoUpgradePanel','protectionPanel','weaponSettingsPanel','beastJournalPanel','aspectSettingsPanel','aspectPrompt','aspectPicker','petAlertPanel','trackingSettingsPanel','trackingPicker'}) do
+    for _,key in ipairs({'configPanel','foodPanel','ammoPanel','instanceSettingsPanel','rangeSettingsPanel','petStatusSettingsPanel','petListPanel','animalSettingsPanel','petAbilityBrowser','ammoUpgradePanel','protectionPanel','weaponSettingsPanel','beastJournalPanel','aspectSettingsPanel','aspectPrompt','aspectPicker','petAlertPanel','trackingSettingsPanel','trackingPicker','mobFinderPanel','playerFinderPanel'}) do
         if F[key] then F[key]:Hide() end
     end
 end
@@ -51,7 +51,7 @@ function F.OpenConfig()
     if InCombatLockdown() then F.Print('Open settings after combat.'); return end
     F.HideConfigPages()
     if not F.configPanel then
-        local p=panel('HunterToolsConfig','',760,572);F.configPanel=p
+        local p=panel('HunterToolsConfig','',760,668);F.configPanel=p
         p.checks={};p.actions={};p.statusLabels={}
         local emblem=p:CreateTexture(nil,'ARTWORK');emblem:SetSize(90,90);emblem:SetPoint('TOPLEFT',24,-12)
         emblem:SetTexture('Interface\\AddOns\\HunterTools\\Artwork\\HunterToolsLogo')
@@ -89,7 +89,15 @@ function F.OpenConfig()
         tracking:SetScript('OnClick',function() F.OpenTrackingSettings() end);p.actions.tracking=tracking
         local weapons=CreateFrame('Button',nil,p,'UIPanelButtonTemplate');weapons:SetSize(206,27);weapons:SetPoint('TOPLEFT',526,-531);weapons:SetText('Weapon comparisons >')
         weapons:SetScript('OnClick',function() F.OpenWeaponComparisonSettings() end);p.actions.weapons=weapons
-        F.FinishMenu(p,760,572)
+        local finders=F.MenuSection(p,26,-574,708,72)
+        F.MenuText(finders,'Finders',14,-12,200,'GameFontNormalLarge')
+        F.MenuText(finders,'Mob and player watches - all classes',14,-39,230)
+        for _,spec in ipairs({{'mobfinder','Mob Finder',242,'OpenMobFinder'},{'playerfinder','Player Finder',474,'OpenPlayerFinder'}}) do
+            local key,method=spec[1],spec[4]
+            local b=CreateFrame('Button',nil,finders,'UIPanelButtonTemplate');b:SetSize(210,30);b:SetPoint('TOPLEFT',spec[3],-22);b:SetText(spec[2]);p.actions[key]=b
+            b:SetScript('OnClick',function() if not InCombatLockdown() then F.HideConfigPages();F[method]() end end)
+        end
+        F.FinishMenu(p,760,668)
     end
     F.RefreshToolMenu()
     F.configPanel:Show()

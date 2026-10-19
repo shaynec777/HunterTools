@@ -11,3 +11,7 @@ Restart WoW once after installation to ensure the new PetStatus.lua module and T
 - Last fed records only future successful HunterTools feedings. Food supply respects the current allowed/protected foods and reports inventory settling during login.
 
 Preferences and window position are per character. This is an unpublished local addition; live visual confirmation is still needed.
+
+## Unpublished learned-abilities addition
+
+Own-pet status and mouseover tips now include Learned abilities, independently selectable for Window and Mouseover. Reads the current pet spellbook with ranks; does not substitute the hunter training cache or database abilities. Handles missing pet, combat, loading, partial data, duplicate spells and legacy spellbook APIs. Defaults on for both surfaces. Automated pet-status and menu checks passed. Added after 3.1.4 publication; not part of the published ZIP.

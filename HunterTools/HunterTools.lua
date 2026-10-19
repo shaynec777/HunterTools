@@ -119,6 +119,13 @@ loader:SetScript('OnEvent',function(_,event,a,b,c)
         SLASH_FEEDOMATICTOO4='/huntertools'
         SLASH_FEEDOMATICTOO2='/feedomatictoo'
         SlashCmdList.FEEDOMATICTOO=function(text)
+            local playerName=(text or ''):match('^%s*[Pp][Ll][Aa][Yy][Ee][Rr][Ff][Ii][Nn][Dd][Ee][Rr]%s+(.+)$')
+            if playerName then F.WatchPlayer(playerName);F.OpenPlayerFinder();return end
+            if (text or ''):lower():match('^%s*playerfinder%s*$') then F.OpenPlayerFinder();return end
+            if (text or ''):lower():match('^%s*mobfinderdebug%s*$') then F.DebugMobFinder();return end
+            local mobName=(text or ''):match('^%s*[Mm][Oo][Bb][Ff][Ii][Nn][Dd][Ee][Rr]%s+(.+)$')
+            if mobName then F.WatchMob(mobName);F.OpenMobFinder();return end
+            if (text or ''):lower():match('^%s*mobfinder%s*$') then F.OpenMobFinder();return end
             local beastQuery=(text or ''):match('^%s*[Bb][Ee][Aa][Ss][Tt][Dd][Ee][Tt][Aa][Ii][Ll][Ss]?%s+(.+)$')
             if beastQuery then F.OpenBeastSearch(beastQuery);return end
             if (text or ''):lower():match('^%s*beastsearch%s*$') then F.OpenBeastSearch('');return end

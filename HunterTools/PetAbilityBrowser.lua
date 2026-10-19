@@ -144,14 +144,15 @@ function F.ShowPetBrowserBeastDetails(id)
         d:SetFrameLevel(p:GetFrameLevel()+20);d:SetAlpha(1)
         d.background=d:CreateTexture(nil,'BACKGROUND');d.background:SetAllPoints();d.background:SetColorTexture(0.025,0.035,0.03,1)
         d:SetBackdrop({bgFile='Interface\\Buttons\\WHITE8X8',edgeFile='Interface\\Tooltips\\UI-Tooltip-Border',edgeSize=12});d:SetBackdropColor(0.035,0.047,0.044,1)
-        d.title=label(d,'',14,-14,550,'GameFontNormal')
+        d.title=label(d,'',14,-14,410,'GameFontNormal')
         local scroll=CreateFrame('ScrollFrame',nil,d,'UIPanelScrollFrameTemplate');d.scroll=scroll
         scroll:SetPoint('TOPLEFT',14,-48);scroll:SetPoint('BOTTOMRIGHT',-34,16)
         local content=CreateFrame('Frame',nil,scroll);content:SetWidth(550);scroll:SetScrollChild(content);d.content=content
         d.text=label(content,'',0,0,550,'GameFontHighlight')
+        button(d,'Watch mob',436,-10,85,function() if F.WatchMob and F.WatchMob(d.mobName,d.npcID) then F.OpenMobFinder() end end)
         button(d,'Back',530,-10,65,function() d:Hide() end)
     end
-    local d=p.beastDetails;d.title:SetText(name);d.text:SetText(details)
+    local d=p.beastDetails;d.mobName=name;d.npcID=id;d.title:SetText(name);d.text:SetText(details)
     d.content:SetHeight(math.max(1,d.text:GetStringHeight()+10));d.scroll:SetVerticalScroll(0);d:Show()
 end
 local function refreshBeastSearch(p,showPictures)

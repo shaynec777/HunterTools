@@ -98,7 +98,7 @@ local upgraded=false;F.OpenAmmoUpgradeSettings=function() upgraded=true end
 ammo.tabs.upgrades.scripts.OnClick();assert(upgraded)
 F.OpenConfig();menu.checks.range:SetChecked(false);menu.checks.range.scripts.OnClick();assert(not range.enabled and menu.statusLabels.range.text:find('Disabled',1,true))
 -- Fit to small displays and preserve the close button's native artwork.
-UIParent:SetSize(800,600);F.FinishMenu(menu,760,572);assert(menu.scale<=1 and menu.scale>0)
+UIParent:SetSize(800,600);F.FinishMenu(menu,760,668);assert(menu.scale<=1 and menu.scale>0)
 for _,child in ipairs({menu:GetChildren()}) do if child.template=='UIPanelCloseButton' then assert(not child.menuStyled) end end
 combat=true;menu:Hide();F.OpenConfig();assert(not menu.shown)
 print('PASS: shared theme, six tool cards, navigation, opaque panels, food/ammo tabs, search/list edits, saved controls, small-screen scale and combat guard')

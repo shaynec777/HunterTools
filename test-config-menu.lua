@@ -60,3 +60,14 @@ F.HideConfigPages();assert(not p.shown)
 F.configPanel:Hide(); InCombatLockdown=function() return true end
 F.OpenConfig(); assert(not F.configPanel.shown)
 print('PASS: six-tool card navigation, independent pet window/tooltip checkboxes, instance toggles and combat guard')
+
+InCombatLockdown=function() return false end
+F.OpenConfig()
+local mobOpened,playerOpened
+F.OpenMobFinder=function() mobOpened=true end
+F.OpenPlayerFinder=function() playerOpened=true end
+F.configPanel.actions.mobfinder.scripts.OnClick();assert(mobOpened and not F.configPanel.shown)
+F.OpenConfig();F.configPanel.actions.playerfinder.scripts.OnClick();assert(playerOpened and not F.configPanel.shown)
+mobOpened=false;InCombatLockdown=function() return true end
+F.configPanel.actions.mobfinder.scripts.OnClick();assert(not mobOpened)
+print('PASS: separate main-menu Finders section, mob/player navigation and combat guard')

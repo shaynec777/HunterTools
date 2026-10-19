@@ -1,3 +1,25 @@
+# HunterTools 3.1.5
+
+## New features
+
+- Mob Finder and Player Finder, accessible from the new Finders section of the main menu or `/ht mobfinder` and `/ht playerfinder`.
+- Saved watch lists, optional partial-name matching, sound/screen alerts and a click-to-target detection popup. Player targeting supports Forever surnames.
+- Brief highlight on the targeted unit's visible nameplate. Direction arrows and private map markers require genuine public location data; ordinary detections commonly provide none. No Questie dependency.
+- Current pet details can display learned abilities from the live pet spellbook, with independent window and mouseover settings.
+
+## Fixes and compatibility
+
+- Include Sonic Blast in Bat family training options, with Blizzard/Petopia source labeling. This does not claim that every wild bat teaches it or assign unknown ranks.
+- Clarify that weapon comparisons assume stationary Auto Shot, including the new 0.5-second standing requirement.
+- Reviewed October 15 changes to Dismember, Sonic Blast and Mine!: bundled ability records store spell identities and teaching references, not outdated damage, duration or cooldown descriptions. Pet expertise/crit changes do not require changes to our Auto Shot-only estimate.
+- Growl detection and disabling on instance entry confirmed working in game after the update.
+
+## Upgrade and limits
+
+Install both addon folders from the ZIP and fully restart WoW for the new finder modules. Existing character settings are retained.
+
+Player targeting with a full Forever name is confirmed in game. Broader Pack behavior, finder combat transitions, settings persistence and navigation on coordinate-bearing rare/event markers still need in-game coverage. Targeting requires clicking the button and is unavailable during combat.
+
 # HunterTools 3.1.4
 
 ## New in this update
